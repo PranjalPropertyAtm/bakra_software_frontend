@@ -3,6 +3,7 @@ import {BrowserRouter, Navigate, Routes,Route} from "react-router-dom";
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ProtectedRoutes from './utils/ProtectedRoutes.jsx';
+import AdminLayout from './components/AdminLayout.jsx';
 
 
 function App() {
@@ -10,9 +11,16 @@ function App() {
     <>
     <BrowserRouter>
       <Routes>
-        <Route path='/' element={<Navigate to="/dashboard" replace />} />
-        <Route path='/login' element={<Login/>} />
-         <Route path="/dashboard" element={<ProtectedRoutes><Dashboard /></ProtectedRoutes>} />
+         <Route path='/login' element={<Login/>} /> 
+
+        <Route path='/' element={<ProtectedRoutes><AdminLayout/></ProtectedRoutes>} >
+        <Route index element={<Navigate to="/dashboard" />} replace />
+         <Route path="/dashboard" element={<Dashboard />} />
+         {/* <Route path="orders" element={<Orders />} /> */}
+         </Route>
+
+          {/* Catch-all: redirect unknown routes to login */}
+        {/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
       </Routes>
     </BrowserRouter>
     </>

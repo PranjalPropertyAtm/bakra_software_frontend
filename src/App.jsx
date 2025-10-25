@@ -4,6 +4,8 @@ import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import ProtectedRoutes from './utils/ProtectedRoutes.jsx';
 import AdminLayout from './components/AdminLayout.jsx';
+import Orders from './pages/Orders.jsx';
+import Customers from './pages/Customers.jsx';
 
 
 function App() {
@@ -16,7 +18,8 @@ function App() {
         <Route path='/' element={<ProtectedRoutes><AdminLayout/></ProtectedRoutes>} >
         <Route index element={<Navigate to="/dashboard" />} replace />
          <Route path="/dashboard" element={<Dashboard />} />
-         {/* <Route path="orders" element={<Orders />} /> */}
+         <Route path="/orders" element={<Orders />} />
+           <Route path="/customers" element={<Customers />} />
          </Route>
 
           {/* Catch-all: redirect unknown routes to login */}

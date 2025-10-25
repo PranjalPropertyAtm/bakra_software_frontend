@@ -12,9 +12,9 @@ const AdminLayout = () => {
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <Sidebar />
-      <div className="flex-1 flex flex-col ">
+      <div className="flex-1 flex flex-col md:ml">
         <Navbar onLogout={logout} />
-      <main className="flex-1 p-6 md:ml-64">
+      <main className="flex-1 p-6 md:ml">
         <Outlet />
       </main>
     </div>

@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit, CheckCircle, XCircle } from "lucide-react";
 import axiosInstance from "../lib/axios.js";
+import { notify } from "../utils/toast.js";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -42,14 +43,15 @@ const Orders = () => {
   const handleAddOrder = async () => {
     const { name, phone, address, deliveryTimeSlot, quantity, paymentMode } = newOrder;
     if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode) {
-      alert("⚠️ Please fill all required fields!");
+     
+notify.warning("Please fill all required fields!");
       return;
     }
 
     try {
       const res = await axiosInstance.post("/orders/add", newOrder);
       if (res.data.success) {
-        alert("✅ Order added successfully!");
+       notify.success("Order added successfully!");
         setShowModal(false);
         setNewOrder({
           name: "",
@@ -65,7 +67,7 @@ const Orders = () => {
       }
     } catch (error) {
       console.error("❌ Error adding order:", error);
-      alert(error.response?.data?.message || "Failed to add order!");
+      notify.error(error.response?.data?.message || "Failed to add order!");
     }
   };
 
@@ -82,19 +84,19 @@ const Orders = () => {
     try {
       const res = await axiosInstance.put(`orders/${id}/status`, { status: newStatus });
       if (res.data.success) {
-        alert(res.data.message);
+         notify.success(res.data.message || "Operation successful!");
         fetchOrders();
       }
     } catch (err) {
       console.error("❌ Status update error:", err);
-      alert("Error updating order status!");
+      notify.error("Error updating order status!");
     }
   };
 
   // ✅ Cancel modal confirm
   const handleCancelOrder = async () => {
     if (!cancelData.reason.trim()) {
-      alert("Please enter a cancellation reason.");
+    notify.error("Please Enter a Cancellation Reason");
       return;
     }
 
@@ -105,14 +107,14 @@ const Orders = () => {
         cancelledBy: "Admin",
       });
       if (res.data.success) {
-        alert("Order cancelled successfully!");
+        notify.success("Order cancelled successfully!");
         setShowCancelModal(false);
         setCancelData({ id: "", reason: "" });
         fetchOrders();
       }
     } catch (err) {
       console.error("❌ Cancel error:", err);
-      alert("Error cancelling order!");
+      notify.error("Error cancelling order!");
     }
   };
 

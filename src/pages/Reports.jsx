@@ -928,7 +928,7 @@ const Reports = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 p-6">
+    <div className="min-h-screen bg-slate-50 text-slate-900 p-6 font-[Inter]">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <h1 className="text-2xl font-semibold text-slate-800 mb-4 md:mb-0">

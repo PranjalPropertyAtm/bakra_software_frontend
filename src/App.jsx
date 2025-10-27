@@ -7,6 +7,8 @@ import AdminLayout from './components/AdminLayout.jsx';
 import Orders from './pages/Orders.jsx';
 import Customers from './pages/Customers.jsx';
 import Report from './pages/Reports.jsx';
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 
 function App() {
@@ -28,6 +30,20 @@ function App() {
           {/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
         </Routes>
       </BrowserRouter>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar
+        closeOnClick
+        pauseOnHover
+        draggable
+        theme="light"
+        style={{
+          fontSize: "14px",
+          fontWeight: 500,
+        }}
+      />
     </>
   )
 }

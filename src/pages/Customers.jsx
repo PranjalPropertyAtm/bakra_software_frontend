@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import {Plus, Edit, Eye, XCircle, CheckCircle }  from "lucide-react";
 import axiosInstance from "../lib/axios.js";
+import { notify } from "../utils/toast.js";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -37,7 +38,7 @@ const Customers = () => {
       if (res.data.success) setCustomers(res.data.customers);
     } catch (error) {
       console.error("❌ Error fetching customers:", error);
-      alert("Failed to fetch customers!");
+      notify.error("Failed to fetch customers!");
     } finally {
       setLoading(false);
     }
@@ -47,21 +48,21 @@ const Customers = () => {
   const handleAddCustomer = async () => {
     const { name, phone, address } = newCustomer;
     if (!name || !phone || !address) {
-      alert("⚠️ Please fill all required fields!");
+      notify.warning("Please fill all required fields!");
       return;
     }
 
     try {
       const res = await axiosInstance.post("customers/add", newCustomer);
       if (res.data.success) {
-        alert("✅ Customer added successfully!");
+        notify.success("Customer added successfully!");
         setShowModal(false);
         setNewCustomer({ name: "", phone: "", email: "", address: "" });
         fetchCustomers();
       }
     } catch (error) {
       console.error("❌ Error adding customer:", error);
-      alert(error.response?.data?.message || "Failed to add customer!");
+      notify.error(error.response?.data?.message || "Failed to add customer!");
     }
   };
 
@@ -82,13 +83,13 @@ const Customers = () => {
         editCustomer
       );
       if (res.data.success) {
-       alert("✅ Customer updated successfully!");
+       notify.success("Customer updated successfully!");
         setShowEditModal(false);
         fetchCustomers();
       }
     } catch (err) {
       console.error("❌ Error updating customer:", err);
-      toast.error("Failed to update customer!");
+      notify.error("Failed to update customer!");
     }
   };
 
@@ -103,7 +104,7 @@ const Customers = () => {
       }
     } catch (err) {
       console.error("❌ Error fetching orders:", err);
-      alert("Failed to fetch customer orders!");
+      notify.error("Failed to fetch customer orders!");
     }
   };
 

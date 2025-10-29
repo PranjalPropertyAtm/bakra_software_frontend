@@ -2,7 +2,7 @@
 
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Edit, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import axiosInstance from "../lib/axios.js";
 import { notify } from "../utils/toast.js";
 
@@ -11,8 +11,11 @@ const Orders = () => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showDeliverModal, setShowDeliverModal] = useState(false);
   const [cancelData, setCancelData] = useState({ id: "", reason: "" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [pendingStatus, setPendingStatus] = useState("");
   const ordersPerPage = 10;
 
   const [newOrder, setNewOrder] = useState({
@@ -25,6 +28,22 @@ const Orders = () => {
     paymentMode: "",
     couponCode: "",
   });
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editOrder, setEditOrder] = useState({
+    _id: "",
+    name: "",
+    phone: "",
+    address: "",
+    source: "Call",
+    deliveryTimeSlot: "",
+    quantity: "",
+    paymentMode: "",
+  });
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+
 
   // ✅ Fetch orders
   const fetchOrders = async () => {
@@ -43,15 +62,20 @@ const Orders = () => {
   const handleAddOrder = async () => {
     const { name, phone, address, deliveryTimeSlot, quantity, paymentMode } = newOrder;
     if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode) {
-     
-notify.warning("Please fill all required fields!");
+
+      notify.warning("Please fill all required fields!");
+      return;
+    }
+
+    if (phone.length !== 10) {
+      notify.error("Phone number must be 10 digits long.");
       return;
     }
 
     try {
       const res = await axiosInstance.post("/orders/add", newOrder);
       if (res.data.success) {
-       notify.success("Order added successfully!");
+        notify.success("Order added successfully!");
         setShowModal(false);
         setNewOrder({
           name: "",
@@ -63,6 +87,7 @@ notify.warning("Please fill all required fields!");
           paymentMode: "",
           couponCode: "",
         });
+
         fetchOrders();
       }
     } catch (error) {
@@ -70,6 +95,34 @@ notify.warning("Please fill all required fields!");
       notify.error(error.response?.data?.message || "Failed to add order!");
     }
   };
+
+  // 🟢 Handle edit order submit
+  const handleEditOrder = async () => {
+    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, _id } = editOrder;
+
+    if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode) {
+      notify.warning("Please fill all required fields!");
+      return;
+    }
+
+    if (phone.length !== 10) {
+      notify.error("Phone number must be 10 digits long.");
+      return;
+    }
+
+    try {
+      const res = await axiosInstance.put(`/orders/edit/${_id}`, editOrder);
+      if (res.data.success) {
+        notify.success("Order updated successfully!");
+        setShowEditModal(false);
+        fetchOrders();
+      }
+    } catch (error) {
+      console.error("❌ Error editing order:", error);
+      notify.error(error.response?.data?.message || "Failed to update order!");
+    }
+  };
+
 
   // ✅ Handle status change
   const handleStatusChange = async (id, newStatus) => {
@@ -79,12 +132,22 @@ notify.warning("Please fill all required fields!");
       return;
     }
 
-    if (!window.confirm(`Change order status to "${newStatus}"?`)) return;
+    if (newStatus === "Delivered") {
+      // 🟩 Open delivery confirmation modal
+      setSelectedOrder(id);
+      setPendingStatus(newStatus);
+      setShowDeliverModal(true);
+      return;
+    }
+
+    // if (!window.confirm(`Change order status to "${newStatus}"?`)) return;
 
     try {
       const res = await axiosInstance.put(`orders/${id}/status`, { status: newStatus });
+
       if (res.data.success) {
-         notify.success(res.data.message || "Operation successful!");
+        setShowDeliverModal(false);
+        notify.success(res.data.message || "Operation successful!");
         fetchOrders();
       }
     } catch (err) {
@@ -93,10 +156,12 @@ notify.warning("Please fill all required fields!");
     }
   };
 
+
+
   // ✅ Cancel modal confirm
   const handleCancelOrder = async () => {
     if (!cancelData.reason.trim()) {
-    notify.error("Please Enter a Cancellation Reason");
+      notify.error("Please Enter a Cancellation Reason");
       return;
     }
 
@@ -117,6 +182,32 @@ notify.warning("Please fill all required fields!");
       notify.error("Error cancelling order!");
     }
   };
+
+  const handleDeleteOrder = async () => {
+    try {
+      if (!selectedOrder) return;
+
+      const res = await axios.delete(
+        `http://localhost:3000/api/orders/delete/${selectedOrder._id}`,
+        { withCredentials: true }
+      );
+
+      if (res.data.success) {
+        toast.success("🗑️ Order deleted successfully!");
+        // Optionally refresh your orders list
+        fetchOrders();
+      } else {
+        toast.error(res.data.message || "Failed to delete order.");
+      }
+    } catch (error) {
+      console.error("❌ Error deleting order:", error);
+      toast.error("Server error while deleting order.");
+    } finally {
+      setShowDeleteModal(false);
+      setSelectedOrder(null);
+    }
+  };
+
 
   useEffect(() => {
     fetchOrders();
@@ -179,26 +270,56 @@ notify.warning("Please fill all required fields!");
                   <select
                     value={order.status}
                     onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                      disabled={order.status === "Cancelled"}
-                    className={`px-2 py-1 rounded-md text-sm font-medium w-full sm:w-auto ${
-                      order.status === "Delivered"
-                        ? "bg-green-100 text-green-700"
-                        : order.status === "Cancelled"
+                    disabled={order.status === "Cancelled" || order.status === "Delivered"  }
+                    className={`px-2 py-1 rounded-md text-sm font-medium w-full sm:w-auto ${order.status === "Delivered"
+                      ? "bg-green-100 text-green-700"
+                      : order.status === "Cancelled"
                         ? "bg-red-100 text-red-700"
                         : "bg-yellow-100 text-yellow-700"
-                    }`}
+                      }`}
                   >
                     <option value="Pending">Pending</option>
-                    <option value="In Progress">In Progress</option>
                     <option value="Delivered">Delivered</option>
                     <option value="Cancelled">Cancelled</option>
                   </select>
                 </td>
                 <td className="py-3 px-4 whitespace-nowrap">{order.orderDate}</td>
                 <td className="py-3 px-4 text-center">
-                  <button className="text-blue-600 hover:text-blue-800">
+                  {/* <button className="text-blue-600 hover:text-blue-800">
+                    <Edit size={18} />
+                  </button> */}
+                  <button
+                    disabled={["Delivered", "Cancelled"].includes(order.status)}
+                    onClick={() => {
+                      setEditOrder({
+                        _id: order._id,
+                        name: order.customerId?.name || "",
+                        phone: order.customerId?.phone || "",
+                        address: order.customerId?.address || "",
+                        source: order.source || "Call",
+                        deliveryTimeSlot: order.deliveryTimeSlot,
+                        quantity: order.quantity,
+                        paymentMode: order.paymentMode,
+                      });
+                      setShowEditModal(true);
+                    }}
+                    className={`text-blue-600 hover:text-blue-800 disabled:opacity-40 disabled:cursor-not-allowed`}
+                  >
                     <Edit size={18} />
                   </button>
+
+                  <button
+                    disabled={["Delivered", "Cancelled"].includes(order.status)}
+                    onClick={() => {
+                      setSelectedOrder(order);
+                      setShowDeleteModal(true);
+                    }}
+                    className="text-red-600 hover:text-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+
+
                 </td>
               </tr>
             ))}
@@ -270,6 +391,47 @@ notify.warning("Please fill all required fields!");
         </div>
       )}
 
+      {/* Delivey Modal */}
+      {showDeliverModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">Confirm Delivery</h2>
+            <p className="text-gray-600 mb-5">
+              Are you sure you want to mark this order as <b>Delivered</b>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeliverModal(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await axiosInstance.put(`orders/${selectedOrder}/status`, {
+                      status: pendingStatus,
+                    });
+                    if (res.data.success) {
+                      notify.success(res.data.message || "Order marked as delivered!");
+                      fetchOrders();
+                      setShowDeliverModal(false);
+                    }
+                  } catch (err) {
+                    console.error("❌ Delivery update error:", err);
+                    notify.error("Failed to update order!");
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
+              >
+                Yes, Deliver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Order Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
@@ -279,27 +441,53 @@ notify.warning("Please fill all required fields!");
             </h2>
 
             <div className="space-y-4">
-              {[
-                { name: "name", placeholder: "Customer Name" },
-                { name: "phone", placeholder: "Phone Number" },
-              ].map((field) => (
-                <input
-                  key={field.name}
-                  type="text"
-                  placeholder={field.placeholder}
-                  value={newOrder[field.name]}
-                  onChange={(e) =>
-                    setNewOrder({ ...newOrder, [field.name]: e.target.value })
-                  }
-                  className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
-                />
-              ))}
 
+
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={newOrder.name}
+                onChange={(e) =>
+                  setNewOrder({ ...newOrder, name: e.target.value.trimStart() })
+                }
+                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+              />
+              {/* Phone Input with +91 fixed */}
+              <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
+                <span className="text-slate-600 font-medium select-none">+91</span>
+                <input
+                  type="tel"
+                  placeholder="Enter 10-digit number"
+                  value={newOrder.phone}
+                  onChange={(e) => {
+                    // ✅ Only digits allowed
+                    let input = e.target.value.replace(/\D/g, "");
+
+                    // ✅ Restrict to 10 digits max
+                    if (input.length > 10) input = input.slice(0, 10);
+
+                    setNewOrder({ ...newOrder, phone: input });
+                  }}
+                  className={`flex-1 ml-2 outline-none ${newOrder.phone.length > 0 && newOrder.phone.length < 10
+                    ? "text-slate-900"
+                    : "text-slate-900"
+                    }`}
+                  maxLength="10"
+                  inputMode="numeric"
+                />
+              </div>
+
+              {/* ⚠️ Optional validation text below */}
+              {/* {newOrder.phone.length > 0 && newOrder.phone.length < 10 && (
+                <p className="text-red-500 text-xs mt-1">
+                  Please enter exactly 10 digits.
+                </p>
+              )} */}
               <textarea
                 placeholder="Delivery Address"
                 value={newOrder.address}
                 onChange={(e) =>
-                  setNewOrder({ ...newOrder, address: e.target.value })
+                  setNewOrder({ ...newOrder, address: e.target.value.trimStart() })
                 }
                 className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
                 rows={2}
@@ -372,6 +560,163 @@ notify.warning("Please fill all required fields!");
           </div>
         </div>
       )}
+      {showEditModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
+          <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
+              <Edit className="text-blue-600" /> Edit Order
+            </h2>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={editOrder.name}
+                onChange={(e) =>
+                  setEditOrder({ ...editOrder, name: e.target.value.trimStart() })
+                }
+                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
+                <span className="text-slate-600 font-medium select-none">+91</span>
+                <input
+                  type="tel"
+                  placeholder="Enter 10-digit number"
+                  value={editOrder.phone}
+                  onChange={(e) => {
+                    let input = e.target.value.replace(/\D/g, "");
+                    if (input.length > 10) input = input.slice(0, 10);
+                    setEditOrder({ ...editOrder, phone: input });
+                  }}
+                  className="flex-1 ml-2 outline-none text-slate-900"
+                  maxLength="10"
+                  inputMode="numeric"
+                />
+              </div>
+
+              <textarea
+                placeholder="Delivery Address"
+                value={editOrder.address}
+                onChange={(e) =>
+                  setEditOrder({ ...editOrder, address: e.target.value.trimStart() })
+                }
+                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                rows={2}
+              />
+
+              <select
+                value={editOrder.deliveryTimeSlot}
+                onChange={(e) =>
+                  setEditOrder({ ...editOrder, deliveryTimeSlot: e.target.value })
+                }
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Delivery Time</option>
+                {[
+                  "7PM - 7.30PM",
+                  "7.30PM - 8PM",
+                  "8PM - 8.30PM",
+                  "8.30PM - 9PM",
+                  "9PM - 9.30PM",
+                  "9.30PM - 10PM",
+                ].map((slot) => (
+                  <option key={slot} value={slot}>
+                    {slot}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={editOrder.quantity}
+                onChange={(e) =>
+                  setEditOrder({ ...editOrder, quantity: e.target.value })
+                }
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Quantity</option>
+                <option value="Quarter">Quarter</option>
+                <option value="Half">Half</option>
+                <option value="Full">Full</option>
+              </select>
+
+              <select
+                value={editOrder.paymentMode}
+                onChange={(e) =>
+                  setEditOrder({ ...editOrder, paymentMode: e.target.value })
+                }
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select Payment Mode</option>
+                <option value="Cash on Delivery">Cash on Delivery</option>
+                <option value="UPI">UPI</option>
+                <option value="Card">Card</option>
+                <option value="Online Payment">Online Payment</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditOrder}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+              >
+                Update Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">
+              Confirm Delete
+            </h2>
+            <p className="text-gray-600 mb-5">
+              Are you sure you want to <b>delete</b> this order? <br />
+              This action cannot be undone.
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await axiosInstance.delete(
+                      `orders/delete/${selectedOrder._id}`
+                    );
+                    if (res.data.success) {
+                      notify.success(res.data.message || "Order deleted successfully!");
+                      fetchOrders();
+                      setShowDeleteModal(false);
+                    }
+                  } catch (err) {
+                    console.error("❌ Delete error:", err);
+                    notify.error("Failed to delete order!");
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
     </div>
   );
 };

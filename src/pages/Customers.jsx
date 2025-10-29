@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {Plus, Edit, Eye, XCircle, CheckCircle }  from "lucide-react";
+import { Plus, Edit, Eye, XCircle, CheckCircle } from "lucide-react";
 import axiosInstance from "../lib/axios.js";
 import { notify } from "../utils/toast.js";
 
@@ -52,6 +52,11 @@ const Customers = () => {
       return;
     }
 
+    if (phone.length !== 10) {
+      notify.error("Phone number must be 10 digits long.");
+      return;
+    }
+
     try {
       const res = await axiosInstance.post("customers/add", newCustomer);
       if (res.data.success) {
@@ -83,7 +88,7 @@ const Customers = () => {
         editCustomer
       );
       if (res.data.success) {
-       notify.success("Customer updated successfully!");
+        notify.success("Customer updated successfully!");
         setShowEditModal(false);
         fetchCustomers();
       }
@@ -160,8 +165,8 @@ const Customers = () => {
                 <td className="py-3 px-4">{cust.phone}</td>
                 <td className="py-3 px-4">{cust.email || "—"}</td>
                 <td className="py-3 px-4">{cust.address}</td>
-                  <td className="py-3 px-4">{cust.totalOrders}</td>
-                 <td className="py-3 px-4 whitespace-nowrap">
+                <td className="py-3 px-4">{cust.totalOrders}</td>
+                <td className="py-3 px-4 whitespace-nowrap">
                   {new Date(cust.createdAt).toLocaleDateString()}
                 </td>
                 <td className="py-3 px-4 text-center flex justify-center gap-3">
@@ -178,7 +183,7 @@ const Customers = () => {
                     <Eye size={16} /> View Orders
                   </button>
                 </td>
-               
+
               </tr>
             ))}
           </tbody>
@@ -229,25 +234,40 @@ const Customers = () => {
                 placeholder="Customer Name"
                 value={newCustomer.name}
                 onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, name: e.target.value })
+                  setNewCustomer({ ...newCustomer, name: e.target.value.trimStart() })
                 }
                 className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
               />
-              <input
-                type="text"
-                placeholder="Phone Number"
-                value={newCustomer.phone}
-                onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, phone: e.target.value })
-                }
-                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
-              />
+             
+              <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
+                <span className="text-slate-600 font-medium select-none">+91</span>
+                <input
+                  type="tel"
+                  placeholder="Enter 10-digit number"
+                  value={newCustomer.phone}
+                  onChange={(e) => {
+                    // ✅ Only digits allowed
+                    let input = e.target.value.replace(/\D/g, "");
+
+                    // ✅ Restrict to 10 digits max
+                    if (input.length > 10) input = input.slice(0, 10);
+
+                    setNewCustomer({ ...newCustomer, phone: input });
+                  }}
+                  className={`flex-1 ml-2 outline-none ${newCustomer.phone.length > 0 && newCustomer.phone.length < 10
+                    ? "text-slate-900"
+                    : "text-slate-900"
+                    }`}
+                  maxLength="10"
+                  inputMode="numeric"
+                />
+              </div>
               <input
                 type="email"
                 placeholder="Email (optional)"
                 value={newCustomer.email}
                 onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, email: e.target.value })
+                  setNewCustomer({ ...newCustomer, email: e.target.value.trimStart() })
                 }
                 className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
               />
@@ -255,7 +275,7 @@ const Customers = () => {
                 placeholder="Address"
                 value={newCustomer.address}
                 onChange={(e) =>
-                  setNewCustomer({ ...newCustomer, address: e.target.value })
+                  setNewCustomer({ ...newCustomer, address: e.target.value.trimStart() })
                 }
                 rows={2}
                 className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
@@ -295,7 +315,7 @@ const Customers = () => {
                   placeholder={`Enter ${field}`}
                   value={editCustomer[field]}
                   onChange={(e) =>
-                    setEditCustomer({ ...editCustomer, [field]: e.target.value })
+                    setEditCustomer({ ...editCustomer, [field]: e.target.value.trimStart() })
                   }
                   className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 />

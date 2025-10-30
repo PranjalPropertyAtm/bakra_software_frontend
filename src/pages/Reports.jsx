@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -94,29 +92,30 @@ const Reports = () => {
 
       {/* Calendar Picker */}
       {showCalendar && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-4 shadow-md w-fit mb-4"
-        >
-          <DateRange
-            editableDateInputs
-            onChange={(item) => {
-              setRange([item.selection]);
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white rounded-xl p-4 shadow-md w-fit mb-4"
+  >
+    <DateRange
+      editableDateInputs
+      onChange={(item) => {
+        const { startDate, endDate } = item.selection;
 
-              const { startDate, endDate } = item.selection;
+        setRange([item.selection]);
 
-              // ✅ Close only when both dates are selected (start !== end)
-              if (startDate && endDate && startDate.getTime() !== endDate.getTime()) {
-                setTimeout(() => setShowCalendar(false), 200); // small delay for smooth close
-              }
-            }}
-            moveRangeOnFirstSelection={false}
-            ranges={range}
-            rangeColors={["#0f172a"]}
-          />
-        </motion.div>
-      )}
+        // ✅ Close only when user selects endDate *after* startDate
+        // (i.e., second selection)
+        if (startDate && endDate && startDate !== endDate) {
+          setTimeout(() => setShowCalendar(false), 200);
+        }
+      }}
+      moveRangeOnFirstSelection={false}
+      ranges={range}
+      rangeColors={["#0f172a"]}
+    />
+  </motion.div>
+)}
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2 mb-4 border-b border-slate-200 pb-2">
@@ -125,8 +124,8 @@ const Reports = () => {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-t-lg ${activeTab === tab.id
-                ? "bg-slate-900 text-white"
-                : "bg-slate-200 text-slate-700 hover:bg-slate-300"
+              ? "bg-slate-900 text-white"
+              : "bg-slate-200 text-slate-700 hover:bg-slate-300"
               } transition`}
           >
             {tab.icon} {tab.label}

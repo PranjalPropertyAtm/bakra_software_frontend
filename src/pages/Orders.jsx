@@ -1,10 +1,9 @@
 
-
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Plus, Edit, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import axiosInstance from "../lib/axios.js";
 import { notify } from "../utils/toast.js";
+import { useSearch } from "../context/SearchContext.jsx";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -42,6 +41,7 @@ const Orders = () => {
   });
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const { searchTerm } = useSearch();
 
 
 
@@ -213,16 +213,39 @@ const Orders = () => {
     fetchOrders();
   }, []);
 
+   const filteredOrders = useMemo(() => {
+  const search = searchTerm.toLowerCase();
+
+  return orders.filter((o) => {
+    const name = o.customerId?.name?.toLowerCase() || "";
+    const phone = o.customerId?.phone?.toLowerCase() || "";
+    const address = o.customerId?.address?.toLowerCase() || "";
+    const payment = o.paymentMode?.toLowerCase() || "";
+    const status = o.status?.toLowerCase() || "";
+    const source = o.source?.toLowerCase() || "";
+
+    return (
+      name.includes(search) ||
+      phone.includes(search) ||
+      address.includes(search) ||
+      payment.includes(search) ||
+      status.includes(search) ||
+      source.includes(search)
+    );
+  });
+}, [searchTerm, orders]);
+
   // ✅ Pagination logic
   const indexOfLast = currentPage * ordersPerPage;
   const indexOfFirst = indexOfLast - ordersPerPage;
-  const currentOrders = orders.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(orders.length / ordersPerPage);
+  const currentOrders = filteredOrders.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 font-[Inter]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+        
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">Orders</h1>
           <p className="text-gray-500 text-sm">Manage and track all customer orders</p>
@@ -254,7 +277,9 @@ const Orders = () => {
             </tr>
           </thead>
           <tbody>
-            {currentOrders.map((order, index) => (
+            
+            {filteredOrders.slice(indexOfFirst, indexOfLast).map((order, index) => (
+
               <tr
                 key={order._id}
                 className="border-b hover:bg-gray-50 transition duration-150"
@@ -324,12 +349,24 @@ const Orders = () => {
               </tr>
             ))}
           </tbody>
+          
+
+
+         
+
         </table>
+         {/* No orders after search */}
+        {filteredOrders.length === 0 && (
+          <p className="text-center text-gray-500 py-6">
+            {loading ? "Loading orders..." : "No orders found."}
+          </p>
+        )}
+        
 
         {/* No orders */}
         {orders.length === 0 && (
           <p className="text-center text-gray-500 py-6">
-            {loading ? "Loading orders..." : "No orders found."}
+            {loading ? "" : "No orders found."}
           </p>
         )}
       </div>

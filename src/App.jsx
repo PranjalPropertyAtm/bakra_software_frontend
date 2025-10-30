@@ -9,11 +9,13 @@ import Customers from './pages/Customers.jsx';
 import Report from './pages/Reports.jsx';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { SearchProvider } from './context/SearchContext.jsx';
 
 
 function App() {
   return (
     <>
+     <SearchProvider>
       <BrowserRouter>
         <Routes>
           <Route path='/login' element={<Login />} />
@@ -44,6 +46,7 @@ function App() {
           fontWeight: 500,
         }}
       />
+    </SearchProvider>
     </>
   )
 }

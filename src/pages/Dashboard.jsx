@@ -173,7 +173,7 @@ const Dashboard = () => {
         nameKey="name"
         cx="50%"
         cy="50%"
-        outerRadius={90}
+        outerRadius={83}
         label={({ name, value }) => `${name}: ${value}`}
       >
         <Cell fill="#10b981" /> {/* Delivered - Green */}

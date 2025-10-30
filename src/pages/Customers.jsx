@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect , useMemo} from "react";
 import { Plus, Edit, Eye, XCircle, CheckCircle } from "lucide-react";
 import axiosInstance from "../lib/axios.js";
 import { notify } from "../utils/toast.js";
+import { useSearch } from "../context/SearchContext.jsx";
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -29,6 +30,8 @@ const Customers = () => {
     email: "",
     address: "",
   });
+
+  const { searchTerm } = useSearch();
 
   // ✅ Fetch customers
   const fetchCustomers = async () => {
@@ -113,12 +116,36 @@ const Customers = () => {
     }
   };
 
+  const filteredCustomers = useMemo(() => {
+    const search = searchTerm.toLowerCase();
+  
+    return customers.filter((o) => {
+      const name = o.name?.toLowerCase() || "";
+      const phone = o.phone?.toLowerCase() || "";
+      const address = o.address?.toLowerCase() || "";
+      const totalOrders = o.totalOrders?.toString().toLowerCase() || "";
+      const payment = o.paymentMode?.toLowerCase() || "";
+      const status = o.status?.toLowerCase() || "";
+      const source = o.source?.toLowerCase() || "";
+  
+      return (
+        name.includes(search) ||
+        // phone.includes(search) ||
+        address.includes(search) ||
+        payment.includes(search) ||
+        totalOrders.includes(search) ||
+        status.includes(search) ||
+        source.includes(search)
+      );
+    });
+  }, [searchTerm, customers]);
+
 
   // ✅ Pagination
   const indexOfLast = currentPage * customersPerPage;
   const indexOfFirst = indexOfLast - customersPerPage;
-  const currentCustomers = customers.slice(indexOfFirst, indexOfLast);
-  const totalPages = Math.ceil(customers.length / customersPerPage);
+  const currentCustomers = filteredCustomers.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 font-[Inter]">
@@ -155,7 +182,7 @@ const Customers = () => {
             </tr>
           </thead>
           <tbody>
-            {currentCustomers.map((cust, index) => (
+             {filteredCustomers.slice(indexOfFirst, indexOfLast).map((cust, index) => (
               <tr
                 key={cust._id}
                 className="border-b hover:bg-gray-50 transition duration-150"
@@ -189,10 +216,18 @@ const Customers = () => {
           </tbody>
         </table>
 
+           {/* No customers after search */}
+        {filteredCustomers.length === 0 && (
+          <p className="text-center text-gray-500 py-6">
+            {loading ? "Loading customers..." : "No customers found."}
+          </p>
+        )}
+        
+
         {/* No Customers */}
         {customers.length === 0 && (
           <p className="text-center text-gray-500 py-6">
-            {loading ? "Loading customers..." : "No customers found."}
+            {loading ? "" : "No customers found."}
           </p>
         )}
       </div>

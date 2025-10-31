@@ -7,6 +7,7 @@ import AdminLayout from './components/AdminLayout.jsx';
 import Orders from './pages/Orders.jsx';
 import Customers from './pages/Customers.jsx';
 import Report from './pages/Reports.jsx';
+import Associates from './pages/Associates.jsx';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SearchProvider } from './context/SearchContext.jsx';
@@ -26,6 +27,7 @@ function App() {
             <Route path="/orders" element={<Orders />} />
             <Route path="/customers" element={<Customers />} />
              <Route path="/reports" element={<Report />} />
+            <Route path="/associates" element={<Associates />} />
           </Route>
 
           {/* Catch-all: redirect unknown routes to login */}

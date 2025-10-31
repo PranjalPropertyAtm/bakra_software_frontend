@@ -21,7 +21,7 @@ const Orders = () => {
     name: "",
     phone: "",
     address: "",
-    source: "Call",
+    source: "",
     deliveryTimeSlot: "",
     quantity: "",
     paymentMode: "",
@@ -34,16 +34,35 @@ const Orders = () => {
     name: "",
     phone: "",
     address: "",
-    source: "Call",
+    source: "",
+    associateId: "",
     deliveryTimeSlot: "",
     quantity: "",
     paymentMode: "",
   });
+  
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { searchTerm } = useSearch();
 
 
+const [associates, setAssociates] = useState([]); // 🧾 Associates list
+const [loadingAssociates, setLoadingAssociates] = useState(true);
+
+// Fetch associates from API
+useEffect(() => {
+  const fetchAssociates = async () => {
+    try {
+      const res = await axiosInstance.get("associates/all");
+      setAssociates(res.data.associates);
+    } catch (error) {
+      console.error("❌ Error fetching associates:", error);
+    } finally {
+      setLoadingAssociates(false);
+    }
+  };
+  fetchAssociates();
+}, []);
 
   // ✅ Fetch orders
   const fetchOrders = async () => {
@@ -60,12 +79,18 @@ const Orders = () => {
 
   // ✅ Add new order
   const handleAddOrder = async () => {
-    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode } = newOrder;
-    if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode) {
+    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode,source , associateId} = newOrder;
 
+  
+
+    if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode || !source) {
       notify.warning("Please fill all required fields!");
       return;
     }
+      if (source === "Associates" && !associateId) {
+  notify.error("Please select an Associate!");
+  return;
+}
 
     if (phone.length !== 10) {
       notify.error("Phone number must be 10 digits long.");
@@ -81,7 +106,7 @@ const Orders = () => {
           name: "",
           phone: "",
           address: "",
-          source: "Call",
+          source: "",
           deliveryTimeSlot: "",
           quantity: "",
           paymentMode: "",
@@ -98,12 +123,19 @@ const Orders = () => {
 
   // 🟢 Handle edit order submit
   const handleEditOrder = async () => {
-    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, _id } = editOrder;
+    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, _id ,source, associateId} = editOrder;
 
-    if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode) {
+  
+
+    if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode || !source ) {
       notify.warning("Please fill all required fields!");
       return;
     }
+
+       if (source === "Associates" && !associateId) {
+  notify.error("Please select an Associate!");
+  return;
+}
 
     if (phone.length !== 10) {
       notify.error("Phone number must be 10 digits long.");
@@ -578,6 +610,50 @@ const Orders = () => {
                 <option value="Card">Card</option>
                 <option value="Online Payment">Online Payment</option>
               </select>
+
+     {/* 🧭 Source Selection */}
+<select
+  value={newOrder.source}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (value === "Associates") {
+      setNewOrder({ ...newOrder, source: value, associateId: "" });
+    } else {
+      setNewOrder({ ...newOrder, source: value, associateId: null });
+    }
+  }}
+  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+>
+  <option value="">Select Source</option>
+
+  {/* Static sources */}
+  <option value="WhatsApp">WhatsApp</option>
+  <option value="Call">Call</option>
+  <option value="Associates">Associates</option>
+</select>
+
+{/* 👥 Associate Dropdown — only show when “Associates” selected */}
+{newOrder.source === "Associates" && (
+  <select
+    value={newOrder.associateId || ""}
+    onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
+    className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+  >
+    <option value="">Select Associate</option>
+    {loadingAssociates ? (
+      <option disabled>Loading...</option>
+    ) : associates.length > 0 ? (
+      associates.map((a) => (
+        <option key={a._id} value={a._id}>
+          {a.name} ({a.designation})
+        </option>
+      ))
+    ) : (
+      <option disabled>No Associates Found</option>
+    )}
+  </select>
+)}
+
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
@@ -690,6 +766,50 @@ const Orders = () => {
                 <option value="Card">Card</option>
                 <option value="Online Payment">Online Payment</option>
               </select>
+              {/* 🧭 Source Selection */}
+<select
+  value={editOrder.source}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (value === "Associates") {
+      setEditOrder({ ...editOrder, source: value, associateId: "" });
+    } else {
+      setEditOrder({ ...editOrder, source: value, associateId: null });
+    }
+  }}
+  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+>
+  <option value="">Select Source</option>
+
+  {/* Static sources */}
+  <option value="WhatsApp">WhatsApp</option>
+  <option value="Call">Call</option>
+  <option value="Associates">Associates</option>
+</select>
+
+{/* 👥 Associate Dropdown — only show when “Associates” selected */}
+{editOrder.source === "Associates" && (
+  <select
+    value={editOrder.associateId || ""}
+    onChange={(e) => setEditOrder({ ...editOrder, associateId: e.target.value })}
+    className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+  >
+    <option value="">Select Associate</option>
+    {loadingAssociates ? (
+      <option disabled>Loading...</option>
+    ) : associates.length > 0 ? (
+      associates.map((a) => (
+        <option key={a._id} value={a._id}>
+          {a.name} ({a.designation})
+        </option>
+      ))
+    ) : (
+      <option disabled>No Associates Found</option>
+    )}
+  </select>
+)}
+
+              
             </div>
 
             <div className="flex justify-end gap-3 mt-6">

@@ -343,7 +343,7 @@ const Customers = () => {
               <Edit className="text-blue-600" /> Edit Customer
             </h2>
             <div className="space-y-4">
-              {["name", "phone", "email", "address"].map((field) => (
+              {["name", "email", "address"].map((field) => (
                 <input
                   key={field}
                   type="text"
@@ -355,6 +355,30 @@ const Customers = () => {
                   className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
                 />
               ))}
+
+                 <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
+                <span className="text-slate-600 font-medium select-none">+91</span>
+                <input
+                  type="tel"
+                  placeholder="Enter 10-digit number"
+                  value={editCustomer.phone}
+                  onChange={(e) => {
+                    // ✅ Only digits allowed
+                    let input = e.target.value.replace(/\D/g, "");
+
+                    // ✅ Restrict to 10 digits max
+                    if (input.length > 10) input = input.slice(0, 10);
+
+                    setEditCustomer({ ...editCustomer, phone: input });
+                  }}
+                  className={`flex-1 ml-2 outline-none ${editCustomer.phone.length > 0 && editCustomer.phone.length < 10
+                    ? "text-slate-900"
+                    : "text-slate-900"
+                    }`}
+                  maxLength="10"
+                  inputMode="numeric"
+                />
+              </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button

@@ -16,7 +16,7 @@ const AdminSidebar = () => {
   const menus = [
     { name: "Dashboard", path: "/dashboard", icon: <FiHome /> },
     { name: "Orders", path: "/orders", icon: <FiShoppingBag /> },
-    { name: "Menu", path: "/menu", icon: <FiBarChart2 /> },
+    { name: "Associates", path: "/associates", icon: <FiBarChart2 /> },
     { name: "Customers", path: "/customers", icon: <FiUsers /> },
     { name: "Reports", path: "/reports", icon: <FiBarChart2 /> },
     { name: "Settings", path: "/settings", icon: <FiSettings /> },

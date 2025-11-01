@@ -202,7 +202,7 @@ const SalesReport = ({ startDate, endDate }) => {
                     <td className="px-3 py-2">{row.paymentMode}</td>
                     <td className="px-3 py-2">{row.status}</td>
                     <td className="px-3 py-2">
-                      {new Date(row.orderDate).toLocaleDateString("en-IN")}
+                      {new Date(row.orderDate).toISOString().split("T")[0]}
                     </td>
                   </tr>
                 ))}

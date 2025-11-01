@@ -40,29 +40,29 @@ const Orders = () => {
     quantity: "",
     paymentMode: "",
   });
-  
+
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { searchTerm } = useSearch();
 
 
-const [associates, setAssociates] = useState([]); // 🧾 Associates list
-const [loadingAssociates, setLoadingAssociates] = useState(true);
+  const [associates, setAssociates] = useState([]); // 🧾 Associates list
+  const [loadingAssociates, setLoadingAssociates] = useState(true);
 
-// Fetch associates from API
-useEffect(() => {
-  const fetchAssociates = async () => {
-    try {
-      const res = await axiosInstance.get("associates/all");
-      setAssociates(res.data.associates);
-    } catch (error) {
-      console.error("❌ Error fetching associates:", error);
-    } finally {
-      setLoadingAssociates(false);
-    }
-  };
-  fetchAssociates();
-}, []);
+  // Fetch associates from API
+  useEffect(() => {
+    const fetchAssociates = async () => {
+      try {
+        const res = await axiosInstance.get("associates/all");
+        setAssociates(res.data.associates);
+      } catch (error) {
+        console.error("❌ Error fetching associates:", error);
+      } finally {
+        setLoadingAssociates(false);
+      }
+    };
+    fetchAssociates();
+  }, []);
 
   // ✅ Fetch orders
   const fetchOrders = async () => {
@@ -79,18 +79,18 @@ useEffect(() => {
 
   // ✅ Add new order
   const handleAddOrder = async () => {
-    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode,source , associateId} = newOrder;
+    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, source, associateId } = newOrder;
 
-  
+
 
     if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode || !source) {
       notify.warning("Please fill all required fields!");
       return;
     }
-      if (source === "Associates" && !associateId) {
-  notify.error("Please select an Associate!");
-  return;
-}
+    if (source === "Associates" && !associateId) {
+      notify.error("Please select an Associate!");
+      return;
+    }
 
     if (phone.length !== 10) {
       notify.error("Phone number must be 10 digits long.");
@@ -123,19 +123,19 @@ useEffect(() => {
 
   // 🟢 Handle edit order submit
   const handleEditOrder = async () => {
-    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, _id ,source, associateId} = editOrder;
+    const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, _id, source, associateId } = editOrder;
 
-  
 
-    if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode || !source ) {
+
+    if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode || !source) {
       notify.warning("Please fill all required fields!");
       return;
     }
 
-       if (source === "Associates" && !associateId) {
-  notify.error("Please select an Associate!");
-  return;
-}
+    if (source === "Associates" && !associateId) {
+      notify.error("Please select an Associate!");
+      return;
+    }
 
     if (phone.length !== 10) {
       notify.error("Phone number must be 10 digits long.");
@@ -245,27 +245,27 @@ useEffect(() => {
     fetchOrders();
   }, []);
 
-   const filteredOrders = useMemo(() => {
-  const search = searchTerm.toLowerCase();
+  const filteredOrders = useMemo(() => {
+    const search = searchTerm.toLowerCase();
 
-  return orders.filter((o) => {
-    const name = o.customerId?.name?.toLowerCase() || "";
-    const phone = o.customerId?.phone?.toLowerCase() || "";
-    const address = o.customerId?.address?.toLowerCase() || "";
-    const payment = o.paymentMode?.toLowerCase() || "";
-    const status = o.status?.toLowerCase() || "";
-    const source = o.source?.toLowerCase() || "";
+    return orders.filter((o) => {
+      const name = o.customerId?.name?.toLowerCase() || "";
+      const phone = o.customerId?.phone?.toLowerCase() || "";
+      const address = o.customerId?.address?.toLowerCase() || "";
+      const payment = o.paymentMode?.toLowerCase() || "";
+      const status = o.status?.toLowerCase() || "";
+      const source = o.source?.toLowerCase() || "";
 
-    return (
-      name.includes(search) ||
-      phone.includes(search) ||
-      address.includes(search) ||
-      payment.includes(search) ||
-      status.includes(search) ||
-      source.includes(search)
-    );
-  });
-}, [searchTerm, orders]);
+      return (
+        name.includes(search) ||
+        phone.includes(search) ||
+        address.includes(search) ||
+        payment.includes(search) ||
+        status.includes(search) ||
+        source.includes(search)
+      );
+    });
+  }, [searchTerm, orders]);
 
   // ✅ Pagination logic
   const indexOfLast = currentPage * ordersPerPage;
@@ -277,7 +277,7 @@ useEffect(() => {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 font-[Inter]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-        
+
         <div>
           <h1 className="text-2xl font-semibold text-gray-800">Orders</h1>
           <p className="text-gray-500 text-sm">Manage and track all customer orders</p>
@@ -309,7 +309,7 @@ useEffect(() => {
             </tr>
           </thead>
           <tbody>
-            
+
             {filteredOrders.slice(indexOfFirst, indexOfLast).map((order, index) => (
 
               <tr
@@ -327,7 +327,7 @@ useEffect(() => {
                   <select
                     value={order.status}
                     onChange={(e) => handleStatusChange(order._id, e.target.value)}
-                    disabled={order.status === "Cancelled" || order.status === "Delivered"  }
+                    disabled={order.status === "Cancelled" || order.status === "Delivered"}
                     className={`px-2 py-1 rounded-md text-sm font-medium w-full sm:w-auto ${order.status === "Delivered"
                       ? "bg-green-100 text-green-700"
                       : order.status === "Cancelled"
@@ -381,25 +381,35 @@ useEffect(() => {
               </tr>
             ))}
           </tbody>
-          
 
 
-         
+
+
 
         </table>
-         {/* No orders after search */}
-        {filteredOrders.length === 0 && (
+        {/* No orders after search */}
+        {/* {filteredOrders.length === 0 && (
           <p className="text-center text-gray-500 py-6">
             {loading ? "Loading orders..." : "No orders found."}
           </p>
-        )}
-        
+        )} */}
+
 
         {/* No orders */}
-        {orders.length === 0 && (
+        {/* {orders.length === 0 && (
           <p className="text-center text-gray-500 py-6">
             {loading ? "" : "No orders found."}
           </p>
+        )} */}
+
+        {/* Loading State */}
+        {loading && (
+          <p className="text-center text-gray-500 py-6">Loading orders...</p>
+        )}
+
+        {/* No Orders (after loading) */}
+        {!loading && filteredOrders.length === 0 && (
+          <p className="text-center text-gray-500 py-6">No orders found.</p>
         )}
       </div>
 
@@ -611,48 +621,48 @@ useEffect(() => {
                 <option value="Online Payment">Online Payment</option>
               </select>
 
-     {/* 🧭 Source Selection */}
-<select
-  value={newOrder.source}
-  onChange={(e) => {
-    const value = e.target.value;
-    if (value === "Associates") {
-      setNewOrder({ ...newOrder, source: value, associateId: "" });
-    } else {
-      setNewOrder({ ...newOrder, source: value, associateId: null });
-    }
-  }}
-  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
->
-  <option value="">Select Source</option>
+              {/* 🧭 Source Selection */}
+              <select
+                value={newOrder.source}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "Associates") {
+                    setNewOrder({ ...newOrder, source: value, associateId: "" });
+                  } else {
+                    setNewOrder({ ...newOrder, source: value, associateId: null });
+                  }
+                }}
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select Source</option>
 
-  {/* Static sources */}
-  <option value="WhatsApp">WhatsApp</option>
-  <option value="Call">Call</option>
-  <option value="Associates">Associates</option>
-</select>
+                {/* Static sources */}
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Call">Call</option>
+                <option value="Associates">Associates</option>
+              </select>
 
-{/* 👥 Associate Dropdown — only show when “Associates” selected */}
-{newOrder.source === "Associates" && (
-  <select
-    value={newOrder.associateId || ""}
-    onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
-    className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-  >
-    <option value="">Select Associate</option>
-    {loadingAssociates ? (
-      <option disabled>Loading...</option>
-    ) : associates.length > 0 ? (
-      associates.map((a) => (
-        <option key={a._id} value={a._id}>
-          {a.name} ({a.designation})
-        </option>
-      ))
-    ) : (
-      <option disabled>No Associates Found</option>
-    )}
-  </select>
-)}
+              {/* 👥 Associate Dropdown — only show when “Associates” selected */}
+              {newOrder.source === "Associates" && (
+                <select
+                  value={newOrder.associateId || ""}
+                  onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
+                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Select Associate</option>
+                  {loadingAssociates ? (
+                    <option disabled>Loading...</option>
+                  ) : associates.length > 0 ? (
+                    associates.map((a) => (
+                      <option key={a._id} value={a._id}>
+                        {a.name} ({a.designation})
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No Associates Found</option>
+                  )}
+                </select>
+              )}
 
             </div>
 
@@ -767,49 +777,49 @@ useEffect(() => {
                 <option value="Online Payment">Online Payment</option>
               </select>
               {/* 🧭 Source Selection */}
-<select
-  value={editOrder.source}
-  onChange={(e) => {
-    const value = e.target.value;
-    if (value === "Associates") {
-      setEditOrder({ ...editOrder, source: value, associateId: "" });
-    } else {
-      setEditOrder({ ...editOrder, source: value, associateId: null });
-    }
-  }}
-  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
->
-  <option value="">Select Source</option>
+              <select
+                value={editOrder.source}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "Associates") {
+                    setEditOrder({ ...editOrder, source: value, associateId: "" });
+                  } else {
+                    setEditOrder({ ...editOrder, source: value, associateId: null });
+                  }
+                }}
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select Source</option>
 
-  {/* Static sources */}
-  <option value="WhatsApp">WhatsApp</option>
-  <option value="Call">Call</option>
-  <option value="Associates">Associates</option>
-</select>
+                {/* Static sources */}
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Call">Call</option>
+                <option value="Associates">Associates</option>
+              </select>
 
-{/* 👥 Associate Dropdown — only show when “Associates” selected */}
-{editOrder.source === "Associates" && (
-  <select
-    value={editOrder.associateId || ""}
-    onChange={(e) => setEditOrder({ ...editOrder, associateId: e.target.value })}
-    className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-  >
-    <option value="">Select Associate</option>
-    {loadingAssociates ? (
-      <option disabled>Loading...</option>
-    ) : associates.length > 0 ? (
-      associates.map((a) => (
-        <option key={a._id} value={a._id}>
-          {a.name} ({a.designation})
-        </option>
-      ))
-    ) : (
-      <option disabled>No Associates Found</option>
-    )}
-  </select>
-)}
+              {/* 👥 Associate Dropdown — only show when “Associates” selected */}
+              {editOrder.source === "Associates" && (
+                <select
+                  value={editOrder.associateId || ""}
+                  onChange={(e) => setEditOrder({ ...editOrder, associateId: e.target.value })}
+                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Select Associate</option>
+                  {loadingAssociates ? (
+                    <option disabled>Loading...</option>
+                  ) : associates.length > 0 ? (
+                    associates.map((a) => (
+                      <option key={a._id} value={a._id}>
+                        {a.name} ({a.designation})
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No Associates Found</option>
+                  )}
+                </select>
+              )}
 
-              
+
             </div>
 
             <div className="flex justify-end gap-3 mt-6">

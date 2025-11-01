@@ -62,7 +62,7 @@ const CancellationsReport = ({ startDate, endDate }) => {
                   <td className="p-2">{c.reason || "—"}</td>
                   <td className="p-2">
                     {c.cancelledAt
-                      ? new Date(c.cancelledAt).toLocaleString()
+                      ? new Date(c.cancelledAt).toISOString().split("T")[0]
                       : "—"}
                   </td>
                 </tr>

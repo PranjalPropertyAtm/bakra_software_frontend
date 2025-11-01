@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Plus, Edit, Trash2, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle,Eye } from "lucide-react";
 import axiosInstance from "../lib/axios";
 import { notify } from "../utils/toast";
 import { useSearch } from "../context/SearchContext.jsx";
@@ -11,10 +11,10 @@ const Associates = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedAssociate, setSelectedAssociate] = useState(null);
     const [loading, setLoading] = useState(false);
-    // const [viewOrdersModal, setViewOrdersModal] = useState(false);
-    // const [orders, setOrders] = useState([]);
-    // const [selectedAssociateName, setSelectedAssociateName] = useState("");
-    // const [loadingOrders, setLoadingOrders] = useState(false);
+    const [viewOrdersModal, setViewOrdersModal] = useState(false);
+    const [orders, setOrders] = useState([]);
+    const [selectedAssociateName, setSelectedAssociateName] = useState("");
+    const [loadingOrders, setLoadingOrders] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const associatesPerPage = 10;
     const { searchTerm } = useSearch();
@@ -128,45 +128,45 @@ const Associates = () => {
         }
     };
 
-    // const handleViewOrders = async (associate) => {
-    //     try {
-    //         setSelectedAssociateName(associate.name);
-    //         setLoadingOrders(true);
-    //         const res = await axiosInstance.get(`/orders/by-associate/${associate._id}`);
-    //         if (res.data.success) {
-    //             setOrders(res.data.orders);
-    //             setViewOrdersModal(true);
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error fetching orders:", error);
-    //         notify.error("Failed to load orders!");
-    //     } finally {
-    //         setLoadingOrders(false);
-    //     }
-    // };
-    // const fetchAssociateOrders = async (associate) => {
-    //     if (!associate) {
-    //         console.error("❌ Missing associate ID!");
-    //         notify.error("Associate ID not found!");
-    //         return;
-    //     }
+    const handleViewOrders = async (associate) => {
+        try {
+            setSelectedAssociateName(associate.name);
+            setLoadingOrders(true);
+            const res = await axiosInstance.get(`/associates/by-associate/${associate._id}`);
+            if (res.data.success) {
+                setOrders(res.data.orders);
+                setViewOrdersModal(true);
+            }
+        } catch (error) {
+            console.error("❌ Error fetching orders:", error);
+            notify.error("Failed to load orders!");
+        } finally {
+            setLoadingOrders(false);
+        }
+    };
+    const fetchAssociateOrders = async (associate) => {
+        if (!associate) {
+            console.error("❌ Missing associate ID!");
+            notify.error("Associate ID not found!");
+            return;
+        }
 
-    //     try {
-    //         setLoading(true);
-    //         const res = await axiosInstance.get(`/orders/by-associate/${associate._id}`);
-    //         if (res.data.success) {
-    //             setOrders(res.data.orders);
-    //             setShowOrdersModal(true);
-    //         } else {
-    //             notify.warning("No orders found for this associate!");
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error fetching orders:", error);
-    //         notify.error("Failed to fetch associate orders!");
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+        try {
+            setLoading(true);
+            const res = await axiosInstance.get(`/associates/by-associate/${associate._id}`);
+            if (res.data.success) {
+                setOrders(res.data.orders);
+                setViewOrdersModal(true);
+            } else {
+                notify.warning("No orders found for this associate!");
+            }
+        } catch (error) {
+            console.error("❌ Error fetching orders:", error);
+            notify.error("Failed to fetch associate orders!");
+        } finally {
+            setLoading(false);
+        }
+    };
 
 
     // ✅ Search Filter
@@ -230,6 +230,15 @@ const Associates = () => {
                                 <td className="py-3 px-4 text-center">
                                     <button
                                         onClick={() => {
+                                            console.log("🔍 Selected associate:", associate); // Debug
+                                            fetchAssociateOrders(associate);
+                                        }}
+                                        className="text-green-600 hover:text-green-800 mr-2"
+                                    >
+                                        <Eye size={18}/>
+                                    </button>
+                                    <button
+                                        onClick={() => {
                                             setEditAssociate(associate);
                                             setShowEditModal(true);
 
@@ -248,15 +257,7 @@ const Associates = () => {
                                         <Trash2 size={18} />
                                     </button>
 
-                                    {/* <button
-                                        onClick={() => {
-                                            console.log("🔍 Selected associate:", associate); // Debug
-                                            fetchAssociateOrders(associate._id);
-                                        }}
-                                        className="text-green-600 hover:text-green-800"
-                                    >
-                                        View Orders
-                                    </button> */}
+                                    
 
                                 </td>
                             </tr>
@@ -448,12 +449,7 @@ const Associates = () => {
                             >
                                 Update
                             </button>
-                            <button
-                                onClick={() => handleViewOrders(associate)}
-                                className="text-green-600 hover:text-green-800 mr-2"
-                            >
-                                View Orders
-                            </button>
+                           
 
 
                         </div>
@@ -488,7 +484,7 @@ const Associates = () => {
                 </div>
             )}
 
-            {/* {viewOrdersModal && (
+            {viewOrdersModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
                     <div className="bg-white w-full max-w-3xl p-6 rounded-2xl shadow-xl">
                         <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
@@ -540,7 +536,7 @@ const Associates = () => {
                         </div>
                     </div>
                 </div>
-            )} */}
+            )}
 
         </div>
     );

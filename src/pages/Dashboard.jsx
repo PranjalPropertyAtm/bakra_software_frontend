@@ -224,7 +224,7 @@ const Dashboard = () => {
                       {o.status}
                     </td>
                     <td className="px-3 py-2">
-                      {new Date(o.createdAt).toLocaleDateString()}
+                      {new Date(o.createdAt).toISOString().split("T")[0]}
                     </td>
                   </tr>
                 ))

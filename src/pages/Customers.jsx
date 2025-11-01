@@ -1,4 +1,4 @@
-import React, { useState, useEffect , useMemo} from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Plus, Edit, Eye, XCircle, CheckCircle } from "lucide-react";
 import axiosInstance from "../lib/axios.js";
 import { notify } from "../utils/toast.js";
@@ -118,7 +118,7 @@ const Customers = () => {
 
   const filteredCustomers = useMemo(() => {
     const search = searchTerm.toLowerCase();
-  
+
     return customers.filter((o) => {
       const name = o.name?.toLowerCase() || "";
       const phone = o.phone?.toLowerCase() || "";
@@ -127,7 +127,7 @@ const Customers = () => {
       const payment = o.paymentMode?.toLowerCase() || "";
       const status = o.status?.toLowerCase() || "";
       const source = o.source?.toLowerCase() || "";
-  
+
       return (
         name.includes(search) ||
         // phone.includes(search) ||
@@ -182,7 +182,7 @@ const Customers = () => {
             </tr>
           </thead>
           <tbody>
-             {filteredCustomers.slice(indexOfFirst, indexOfLast).map((cust, index) => (
+            {filteredCustomers.slice(indexOfFirst, indexOfLast).map((cust, index) => (
               <tr
                 key={cust._id}
                 className="border-b hover:bg-gray-50 transition duration-150"
@@ -194,7 +194,7 @@ const Customers = () => {
                 <td className="py-3 px-4">{cust.address}</td>
                 <td className="py-3 px-4">{cust.totalOrders}</td>
                 <td className="py-3 px-4 whitespace-nowrap">
-                  {new Date(cust.createdAt).toLocaleDateString()}
+                {new Date(cust.createdAt).toISOString().split("T")[0]}
                 </td>
                 <td className="py-3 px-4 text-center flex justify-center gap-3">
                   <button
@@ -216,19 +216,29 @@ const Customers = () => {
           </tbody>
         </table>
 
-           {/* No customers after search */}
-        {filteredCustomers.length === 0 && (
+        {/* No customers after search */}
+        {/* {filteredCustomers.length === 0 && (
           <p className="text-center text-gray-500 py-6">
             {loading ? "Loading customers..." : "No customers found."}
           </p>
-        )}
-        
+        )} */}
+
 
         {/* No Customers */}
-        {customers.length === 0 && (
+        {/* {customers.length === 0 && (
           <p className="text-center text-gray-500 py-6">
             {loading ? "" : "No customers found."}
           </p>
+        )} */}
+
+        {filteredCustomers.length === 0 && !loading && (
+          <p className="text-center text-gray-500 py-6">
+            No customers found.
+          </p>
+        )}
+
+        {loading && (
+          <p className="text-center text-gray-500 py-6">Loading customers...</p>
         )}
       </div>
 
@@ -273,7 +283,7 @@ const Customers = () => {
                 }
                 className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
               />
-             
+
               <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
                 <span className="text-slate-600 font-medium select-none">+91</span>
                 <input
@@ -356,7 +366,7 @@ const Customers = () => {
                 />
               ))}
 
-                 <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
+              <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-green-500">
                 <span className="text-slate-600 font-medium select-none">+91</span>
                 <input
                   type="tel"

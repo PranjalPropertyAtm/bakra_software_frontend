@@ -865,7 +865,7 @@ const Orders = () => {
                       `orders/delete/${selectedOrder._id}`
                     );
                     if (res.data.success) {
-                      notify.success(res.data.message || "Order deleted successfully!");
+                      notify.success("Order deleted successfully!");
                       fetchOrders();
                       setShowDeleteModal(false);
                     }

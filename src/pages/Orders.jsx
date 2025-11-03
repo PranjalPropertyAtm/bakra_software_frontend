@@ -92,6 +92,21 @@ const Orders = () => {
       setLoading(false);
     }
   };
+   const [timeSlots, setTimeSlots] = useState([]);
+     const [quantities, setQuantities] = useState([]);
+
+  const fetchSettings = async () => {
+      try {
+        const res = await axiosInstance.get("settings/get");
+        const data = res.data.settings;
+
+        // Time slots & quantities extract karo
+        setTimeSlots(data.timeSlots.map((t) => t.slot));
+        setQuantities(data.prices.map((p) => p.quantity));
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
 
   // ✅ Add new order
   const handleAddOrder = async () => {
@@ -259,6 +274,7 @@ const Orders = () => {
 
   useEffect(() => {
     fetchOrders();
+    fetchSettings();
   }, []);
 
   const filteredOrders = useMemo(() => {
@@ -589,12 +605,7 @@ const Orders = () => {
                 />
               </div>
 
-              {/* ⚠️ Optional validation text below */}
-              {/* {newOrder.phone.length > 0 && newOrder.phone.length < 10 && (
-                <p className="text-red-500 text-xs mt-1">
-                  Please enter exactly 10 digits.
-                </p>
-              )} */}
+             
               <textarea
                 placeholder="Delivery Address"
                 value={newOrder.address}
@@ -605,7 +616,7 @@ const Orders = () => {
                 rows={2}
               />
 
-              <select
+              {/* <select
                 value={newOrder.deliveryTimeSlot}
                 onChange={(e) =>
                   setNewOrder({ ...newOrder, deliveryTimeSlot: e.target.value })
@@ -625,9 +636,24 @@ const Orders = () => {
                     {slot}
                   </option>
                 ))}
-              </select>
+              </select> */}
+               <select
+        value={newOrder.deliveryTimeSlot}
+        onChange={(e) =>
+          setNewOrder({ ...newOrder, deliveryTimeSlot: e.target.value })
+        }
+        className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+      >
+        <option value="">Select Delivery Time</option>
+        {timeSlots.map((slot) => (
+          <option key={slot} value={slot}>
+            {slot}
+          </option>
+        ))}
+      </select>
 
-              <select
+
+              {/* <select
                 value={newOrder.quantity}
                 onChange={(e) =>
                   setNewOrder({ ...newOrder, quantity: e.target.value })
@@ -638,7 +664,23 @@ const Orders = () => {
                 <option value="Quarter">Quarter</option>
                 <option value="Half">Half</option>
                 <option value="Full">Full</option>
-              </select>
+              </select> */}
+
+               {/* Quantity Dropdown */}
+      <select
+        value={newOrder.quantity}
+        onChange={(e) =>
+          setNewOrder({ ...newOrder, quantity: e.target.value })
+        }
+        className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+      >
+        <option value="">Select Quantity</option>
+        {quantities.map((q) => (
+          <option key={q} value={q}>
+            {q}
+          </option>
+        ))}
+      </select>
 
               <select
                 value={newOrder.paymentMode}
@@ -655,47 +697,7 @@ const Orders = () => {
               </select>
 
               {/* 🧭 Source Selection */}
-              {/* <select
-                value={newOrder.source}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "Associates") {
-                    setNewOrder({ ...newOrder, source: value, associateId: "" });
-                  } else {
-                    setNewOrder({ ...newOrder, source: value, associateId: null });
-                  }
-                }}
-                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="">Select Source</option>
-
-              
-                <option value="WhatsApp">WhatsApp</option>
-                <option value="Call">Call</option>
-                <option value="Associates">Associates</option>
-              </select>
-
-           
-              {newOrder.source === "Associates" && (
-                <select
-                  value={newOrder.associateId || ""}
-                  onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
-                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Select Associate</option>
-                  {loadingAssociates ? (
-                    <option disabled>Loading...</option>
-                  ) : associates.length > 0 ? (
-                    associates.map((a) => (
-                      <option key={a._id} value={a._id}>
-                        {a.name} ({a.designation})
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No Associates Found</option>
-                  )}
-                </select>
-              )} */}
+             
               <select
   value={newOrder.source}
   onChange={(e) => {
@@ -802,7 +804,7 @@ const Orders = () => {
                 rows={2}
               />
 
-              <select
+              {/* <select
                 value={editOrder.deliveryTimeSlot}
                 onChange={(e) =>
                   setEditOrder({ ...editOrder, deliveryTimeSlot: e.target.value })
@@ -835,8 +837,46 @@ const Orders = () => {
                 <option value="Quarter">Quarter</option>
                 <option value="Half">Half</option>
                 <option value="Full">Full</option>
-              </select>
+              </select> */}
 
+            <select
+  value={editOrder.deliveryTimeSlot}
+  onChange={(e) =>
+    setEditOrder({ ...editOrder, deliveryTimeSlot: e.target.value })
+  }
+  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+>
+  <option value="">Select Delivery Time</option>
+  {timeSlots.length > 0 ? (
+    timeSlots.map((slot) => (
+      <option key={slot} value={slot}>
+        {slot}
+      </option>
+    ))
+  ) : (
+    <option disabled>No Time Slots Found</option>
+  )}
+</select>
+
+{/* 📦 Quantity Dropdown */}
+<select
+  value={editOrder.quantity}
+  onChange={(e) =>
+    setEditOrder({ ...editOrder, quantity: e.target.value })
+  }
+  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+>
+  <option value="">Select Quantity</option>
+  {quantities.length > 0 ? (
+    quantities.map((q) => (
+      <option key={q} value={q}>
+        {q}
+      </option>
+    ))
+  ) : (
+    <option disabled>No Quantities Found</option>
+  )}
+</select>
               <select
                 value={editOrder.paymentMode}
                 onChange={(e) =>

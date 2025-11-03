@@ -1,160 +1,33 @@
-// import React, { useEffect, useState } from "react";
-// import axiosInstance from "../lib/axios.js"; // ✅ axios setup
-// import { toast } from "react-toastify";
-
-// export default function Settings() {
-//   const [settings, setSettings] = useState(null);
-//   const [title, setTitle] = useState("");
-//   const [description, setDescription] = useState("");
-//   const [loading, setLoading] = useState(false);
-
-//   // ✅ Fetch settings from backend
-//   const fetchSettings = async () => {
-//     try {
-//       setLoading(true);
-//       const { data } = await axiosInstance.get("settings/get");
-//       setSettings(data?.settings || {}); // ✅ ensure non-null object
-//     } catch (error) {
-//       console.error("Error fetching settings:", error);
-//       toast.error("Failed to fetch settings");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchSettings();
-//   }, []);
-
-//   // ✅ Add Designation
-//   const handleAdd = async () => {
-//     if (!title.trim()) {
-//       toast.error("Designation title is required");
-//       return;
-//     }
-
-//     try {
-//       const { data } = await axiosInstance.post("settings/designation/add", {
-//         title,
-//         description,
-//       });
-
-//       toast.success(data.message);
-//       setSettings((prev) => ({
-//         ...prev,
-//         designations: data.designations, // ✅ overwrite latest list
-//       }));
-//       setTitle("");
-//       setDescription("");
-//     } catch (error) {
-//       console.error("Error adding designation:", error);
-//       toast.error(error.response?.data?.message || "Failed to add designation");
-//     }
-//   };
-
-//   // ✅ Delete Designation
-//   const handleDelete = async (title) => {
-//     if (!window.confirm(`Delete "${title}" designation?`)) return;
-
-//     try {
-//       const { data } = await axiosInstance.delete(
-//         `settings/designation/${title}`
-//       );
-//       toast.success(data.message);
-//       setSettings((prev) => ({
-//         ...prev,
-//         designations: data.designations,
-//       }));
-//     } catch (error) {
-//       console.error("Error deleting designation:", error);
-//       toast.error(error.response?.data?.message || "Failed to delete");
-//     }
-//   };
-
-//   return (
-//     <div className="p-6">
-//       <h1 className="text-2xl font-semibold mb-4">Settings</h1>
-
-//       {loading ? (
-//         <p>Loading settings...</p>
-//       ) : (
-//         <>
-//           {/* --- Add Designation Section --- */}
-//           <div className="mb-6 border p-4 rounded-lg shadow">
-//             <h2 className="text-lg font-medium mb-3">Add Designation</h2>
-//             <div className="flex flex-col gap-2">
-//               <input
-//                 type="text"
-//                 placeholder="Designation title"
-//                 className="border px-3 py-2 rounded"
-//                 value={title}
-//                 onChange={(e) => setTitle(e.target.value)}
-//               />
-//               <input
-//                 type="text"
-//                 placeholder="Description (optional)"
-//                 className="border px-3 py-2 rounded"
-//                 value={description}
-//                 onChange={(e) => setDescription(e.target.value)}
-//               />
-//               <button
-//                 onClick={handleAdd}
-//                 className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-fit"
-//               >
-//                 Add Designation
-//               </button>
-//             </div>
-//           </div>
-
-//           {/* --- Designation List --- */}
-//           <div className="border p-4 rounded-lg shadow">
-//             <h2 className="text-lg font-medium mb-3">All Designations</h2>
-//             {settings?.designations?.length ? (
-//               <ul className="space-y-2">
-//                 {settings.designations.map((d, i) => (
-//                   <li
-//                     key={i}
-//                     className="flex justify-between items-center border-b pb-2"
-//                   >
-//                     <div>
-//                       <p className="font-medium">{d.title}</p>
-//                       {d.description && (
-//                         <p className="text-sm text-gray-600">{d.description}</p>
-//                       )}
-//                     </div>
-//                     <button
-//                       onClick={() => handleDelete(d.title)}
-//                       className="text-red-600 hover:underline"
-//                     >
-//                       Delete
-//                     </button>
-//                   </li>
-//                 ))}
-//               </ul>
-//             ) : (
-//               <p className="text-gray-500">No designations added yet.</p>
-//             )}
-//           </div>
-//         </>
-//       )}
-//     </div>
-//   );
-// }
 
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../lib/axios.js";
-import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import { Settings as SettingsIcon, Edit3, Lock } from "lucide-react";
+import { notify } from "../utils/toast.js";
+import {
+  Settings as SettingsIcon,
+  Edit3,
+  Lock,
+  Clock,
+  DollarSign,
+  Trash2
+} from "lucide-react";
 
 export default function Settings() {
   const [settings, setSettings] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [price, setPrice] = useState("");
+  const [slot, setSlot] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("designations");
 
-  // ✅ Fetch settings from backend
+  // 🧩 Confirmation Modal States (Shared for all deletions)
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [deleteType, setDeleteType] = useState(""); // 'slot' | 'price' | 'designation'
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  // ✅ Fetch all settings
   const fetchSettings = async () => {
     try {
       setLoading(true);
@@ -173,48 +46,91 @@ export default function Settings() {
   }, []);
 
   // ✅ Add Designation
-  const handleAdd = async () => {
-    if (!title.trim()) return toast.error("Designation title is required");
-
+  const handleAddDesignation = async () => {
+    if (!title.trim()) return notify.error("Designation title is required");
     try {
       const { data } = await axiosInstance.post("settings/designation/add", {
         title,
         description,
       });
-
-      toast.success(data.message);
-      setSettings((prev) => ({
-        ...prev,
-        designations: data.designations,
-      }));
+      notify.success(data.message);
+      setSettings((prev) => ({ ...prev, designations: data.designations }));
       setTitle("");
       setDescription("");
     } catch (error) {
-      console.error("Error adding designation:", error);
-      toast.error(error.response?.data?.message || "Failed to add designation");
+      notify.error(error.response?.data?.message || "Failed to add designation");
     }
   };
 
-  // ✅ Delete Designation
-  const handleDelete = async (title) => {
-    if (!window.confirm(`Delete "${title}" designation?`)) return;
+  // ✅ Open Confirmation Modal (For All)
+  const openConfirmModal = (type, item) => {
+    setDeleteType(type);
+    setSelectedItem(item);
+    setShowConfirmModal(true);
+  };
 
+  // ✅ Unified Delete Handler
+  const confirmDelete = async () => {
     try {
-      const { data } = await axiosInstance.delete(
-        `settings/designation/${title}`
-      );
-      toast.success(data.message);
-      setSettings((prev) => ({
-        ...prev,
-        designations: data.designations,
-      }));
+      let data;
+      if (deleteType === "slot") {
+        const res = await axiosInstance.delete(`settings/timeslot/${selectedItem}`);
+        data = res.data;
+        setSettings((prev) => ({ ...prev, timeSlots: data.timeSlots }));
+      } else if (deleteType === "price") {
+        const res = await axiosInstance.delete(`settings/price/${selectedItem}`);
+        data = res.data;
+        setSettings((prev) => ({ ...prev, prices: data.prices }));
+      } else if (deleteType === "designation") {
+        const res = await axiosInstance.delete(`settings/designation/${selectedItem}`);
+        data = res.data;
+        setSettings((prev) => ({ ...prev, designations: data.designations }));
+      }
+      notify.success(data.message || "Deleted successfully");
     } catch (error) {
-      console.error("Error deleting designation:", error);
-      toast.error(error.response?.data?.message || "Failed to delete");
+      console.error("❌ Delete Error:", error);
+      notify.error(error.response?.data?.message || "Failed to delete item");
+    } finally {
+      setShowConfirmModal(false);
+      setSelectedItem(null);
+      setDeleteType("");
     }
   };
 
-  // ✅ Render Tab Content
+  // ✅ Add Price
+  const handleAddPrice = async () => {
+    if (!quantity.trim() || !price.trim())
+      return notify.error("Both fields required");
+    try {
+      const { data } = await axiosInstance.post("settings/price/add", {
+        quantity,
+        price,
+      });
+      notify.success(data.message);
+      setSettings((prev) => ({ ...prev, prices: data.prices }));
+      setQuantity("");
+      setPrice("");
+    } catch (error) {
+      notify.error(error.response?.data?.message || "Failed to add price");
+    }
+  };
+
+  // ✅ Add Time Slot
+  const handleAddSlot = async () => {
+    if (!slot.trim()) return notify.error("Slot name required");
+    try {
+      const { data } = await axiosInstance.post("settings/timeslot/add", {
+        slot,
+      });
+      notify.success(data.message);
+      setSettings((prev) => ({ ...prev, timeSlots: data.timeSlots }));
+      setSlot("");
+    } catch (error) {
+      notify.error(error.response?.data?.message || "Failed to add slot");
+    }
+  };
+
+  // ✅ Tab Rendering
   const renderTabContent = () => {
     switch (activeTab) {
       case "designations":
@@ -224,11 +140,9 @@ export default function Settings() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            {/* --- Add Designation --- */}
+            {/* Add Designation */}
             <div className="border p-5 rounded-xl shadow-sm bg-white">
-              <h2 className="text-lg font-semibold mb-3">
-                ➕ Add Designation
-              </h2>
+              <h2 className="text-lg font-semibold mb-3">➕ Add Designation</h2>
               <div className="flex flex-col gap-3">
                 <input
                   type="text"
@@ -245,7 +159,7 @@ export default function Settings() {
                   onChange={(e) => setDescription(e.target.value)}
                 />
                 <button
-                  onClick={handleAdd}
+                  onClick={handleAddDesignation}
                   className="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition w-fit"
                 >
                   Add Designation
@@ -253,37 +167,44 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* --- All Designations --- */}
-            <div className="border p-5 rounded-xl shadow-sm bg-white">
-              <h2 className="text-lg font-semibold mb-3">📋 All Designations</h2>
-              {loading ? (
-                <p>Loading...</p>
-              ) : settings?.designations?.length ? (
-                <ul className="space-y-3">
-                  {settings.designations.map((d, i) => (
-                    <li
-                      key={i}
-                      className="flex justify-between items-center border-b pb-2"
-                    >
-                      <div>
-                        <p className="font-medium">{d.title}</p>
-                        {d.description && (
-                          <p className="text-sm text-gray-600">{d.description}</p>
-                        )}
-                      </div>
-                      <button
-                        onClick={() => handleDelete(d.title)}
-                        className="text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-500">No designations added yet.</p>
-              )}
-            </div>
+            {/* All Designations */}
+           <div className="border p-5 rounded-xl shadow-sm bg-white">
+  <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+    📋 All Designations
+  </h2>
+
+  {loading ? (
+    <p className="text-gray-500 text-sm italic">Loading...</p>
+  ) : settings?.designations?.length ? (
+    <ul className="space-y-2">
+      {settings.designations.map((d, i) => (
+        <li
+          key={i}
+          className="flex justify-between items-center bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-100 transition-all duration-200"
+        >
+          <div className="flex flex-col">
+            <p className="text-sm font-semibold text-gray-800">{d.title}</p>
+            {d.description && (
+              <p className="text-xs text-gray-600">{d.description}</p>
+            )}
+          </div>
+
+          <button
+            onClick={() => openConfirmModal("designation", d.title)}
+            className="text-xs text-red-600 hover:text-red-700 hover:underline transition"
+          >
+            <Trash2 size={14} />
+          </button>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p className="text-gray-500 italic text-center py-2 text-sm">
+      No designations added yet.
+    </p>
+  )}
+</div>
+
           </motion.div>
         );
 
@@ -292,12 +213,111 @@ export default function Settings() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-5 bg-white rounded-xl shadow-sm text-gray-700"
+            className="space-y-6"
           >
-            <h2 className="text-lg font-semibold mb-3">
-              🛠 Modify Orders (Coming Soon)
-            </h2>
-            <p>Here you’ll be able to edit or update existing orders.</p>
+            {/* Prices Section */}
+            <div className="border p-5 rounded-xl shadow-sm bg-white">
+              <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <DollarSign size={18} /> Manage Quantity & Prices
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Quantity (e.g. Quarter)"
+                  className="border px-3 py-2 rounded-lg flex-1"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
+                <input
+                  type="number"
+                  placeholder="Price"
+                  className="border px-3 py-2 rounded-lg flex-1"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+                <button
+                  onClick={handleAddPrice}
+                  className="bg-slate-900 text-white px-4 py-2 rounded-lg"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Price List */}
+   <ul className="mt-4 space-y-2">
+  {settings?.prices?.length ? (
+    settings.prices.map((p, i) => (
+      <li
+        key={i}
+        className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-100 transition-all duration-200"
+      >
+        <span className="text-sm text-gray-800 font-medium">
+          {p.quantity} — <span className="text-gray-600">₹{p.price}</span>
+        </span>
+
+        <button
+          onClick={() => openConfirmModal("price", p.quantity)}
+          className="text-xs text-red-600 hover:text-red-700 hover:underline transition"
+        >
+            <Trash2 size={14} />
+        </button>
+      </li>
+    ))
+  ) : (
+    <p className="text-gray-500 italic text-center py-2 text-sm">
+      No prices added yet.
+    </p>
+  )}
+</ul>
+
+            </div>
+
+            {/* Time Slots Section */}
+            <div className="border p-5 rounded-xl shadow-sm bg-white">
+              <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                <Clock size={18} /> Manage Time Slots
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  placeholder="Time Slot (e.g. 9:30PM - 10PM)"
+                  className="border px-3 py-2 rounded-lg flex-1"
+                  value={slot}
+                  onChange={(e) => setSlot(e.target.value)}
+                />
+                <button
+                  onClick={handleAddSlot}
+                  className="bg-slate-900 text-white px-4 py-2 rounded-lg"
+                >
+                  Add Slot
+                </button>
+              </div>
+
+            <ul className="mt-4 space-y-2">
+  {settings?.timeSlots?.length ? (
+    settings.timeSlots.map((t, i) => (
+      <li
+        key={i}
+        className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-100 transition-all duration-200"
+      >
+        <span className="text-sm text-gray-800 font-medium">{t.slot}</span>
+
+        <button
+          onClick={() => openConfirmModal("slot", t.slot)}
+          className="text-xs text-red-600 hover:text-red-700 hover:underline transition"
+        >
+            <Trash2 size={14} />
+        </button>
+      </li>
+    ))
+  ) : (
+    <p className="text-gray-500 italic text-center py-2 text-sm">
+      No slots added yet.
+    </p>
+  )}
+</ul>
+
+            </div>
           </motion.div>
         );
 
@@ -313,17 +333,17 @@ export default function Settings() {
               <input
                 type="password"
                 placeholder="Current Password"
-                className="border px-3 py-2 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+                className="border px-3 py-2 rounded-lg"
               />
               <input
                 type="password"
                 placeholder="New Password"
-                className="border px-3 py-2 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+                className="border px-3 py-2 rounded-lg"
               />
               <input
                 type="password"
                 placeholder="Confirm New Password"
-                className="border px-3 py-2 rounded-lg focus:ring-2 focus:ring-slate-900 outline-none"
+                className="border px-3 py-2 rounded-lg"
               />
               <button className="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-slate-800 transition w-fit">
                 Update Password
@@ -338,8 +358,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6 font-[Inter]">
-      {/* Header */}
+    <div className="min-h-screen bg-slate-50 p-4 font-[Inter]">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <h1 className="text-2xl font-semibold text-slate-800 flex items-center gap-2">
           <SettingsIcon /> Settings Dashboard
@@ -369,6 +388,36 @@ export default function Settings() {
 
       {/* Active Tab Content */}
       <div>{renderTabContent()}</div>
+
+      {/* ✅ Shared Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">
+              Confirm Deletion
+            </h2>
+            <p className="text-gray-600 mb-5">
+              Are you sure you want to delete <b>"{selectedItem}"</b>?
+            </p>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -64,6 +64,22 @@ const Orders = () => {
     fetchAssociates();
   }, []);
 
+   const [designations, setDesignations] = useState([]);
+  // ✅ Fetch designations from backend
+  const fetchDesignations = async () => {
+    try {
+      const { data } = await axiosInstance.get("settings/get");
+      if (data?.settings?.designations?.length) {
+        setDesignations(data.settings.designations);
+      } else {
+        setDesignations([]);
+      }
+    } catch (error) {
+      console.error("Error fetching designations:", error);
+      toast.error("Failed to load designations");
+    }
+  };
+  
   // ✅ Fetch orders
   const fetchOrders = async () => {
     try {
@@ -219,8 +235,8 @@ const Orders = () => {
     try {
       if (!selectedOrder) return;
 
-      const res = await axios.delete(
-        `http://localhost:3000/api/orders/delete/${selectedOrder._id}`,
+      const res = await axiosInstance.delete(
+        `orders/delete/${selectedOrder._id}`,
         { withCredentials: true }
       );
 
@@ -347,6 +363,19 @@ const Orders = () => {
                   </button> */}
                   <button
                     disabled={["Delivered", "Cancelled"].includes(order.status)}
+                    // onClick={() => {
+                    //   setEditOrder({
+                    //     _id: order._id,
+                    //     name: order.customerId?.name || "",
+                    //     phone: order.customerId?.phone || "",
+                    //     address: order.customerId?.address || "",
+                    //     source: order.source || "Call",
+                    //     deliveryTimeSlot: order.deliveryTimeSlot,
+                    //     quantity: order.quantity,
+                    //     paymentMode: order.paymentMode,
+                    //   });
+                    //   setShowEditModal(true);
+                    // }}
                     onClick={() => {
                       setEditOrder({
                         _id: order._id,
@@ -354,6 +383,10 @@ const Orders = () => {
                         phone: order.customerId?.phone || "",
                         address: order.customerId?.address || "",
                         source: order.source || "Call",
+                        associateId:
+                          typeof order.associateId === "object"
+                            ? order.associateId?._id // ✅ convert object to string id
+                            : order.associateId || "",
                         deliveryTimeSlot: order.deliveryTimeSlot,
                         quantity: order.quantity,
                         paymentMode: order.paymentMode,
@@ -493,7 +526,7 @@ const Orders = () => {
                       status: pendingStatus,
                     });
                     if (res.data.success) {
-                      notify.success(res.data.message || "Order marked as delivered!");
+                      notify.success("Order delivered successfully!");
                       fetchOrders();
                       setShowDeliverModal(false);
                     }
@@ -622,7 +655,7 @@ const Orders = () => {
               </select>
 
               {/* 🧭 Source Selection */}
-              <select
+              {/* <select
                 value={newOrder.source}
                 onChange={(e) => {
                   const value = e.target.value;
@@ -636,13 +669,13 @@ const Orders = () => {
               >
                 <option value="">Select Source</option>
 
-                {/* Static sources */}
+              
                 <option value="WhatsApp">WhatsApp</option>
                 <option value="Call">Call</option>
                 <option value="Associates">Associates</option>
               </select>
 
-              {/* 👥 Associate Dropdown — only show when “Associates” selected */}
+           
               {newOrder.source === "Associates" && (
                 <select
                   value={newOrder.associateId || ""}
@@ -662,7 +695,48 @@ const Orders = () => {
                     <option disabled>No Associates Found</option>
                   )}
                 </select>
-              )}
+              )} */}
+              <select
+  value={newOrder.source}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (value === "Associates") {
+      setNewOrder({ ...newOrder, source: value, associateId: "" });
+    } else {
+      setNewOrder({ ...newOrder, source: value, associateId: null });
+    }
+  }}
+  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+>
+  <option value="">Select Source</option>
+  <option value="WhatsApp">WhatsApp</option>
+  <option value="Call">Call</option>
+  <option value="Associates">Associates</option>
+</select>
+
+{/* 👥 Associate Dropdown — only show when “Associates” selected */}
+{newOrder.source === "Associates" && (
+  <select
+    value={newOrder.associateId || ""}
+    onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
+    className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+  >
+    <option value="">Select Associate</option>
+    {loadingAssociates ? (
+      <option disabled>Loading...</option>
+    ) : associates.length > 0 ? (
+      associates.map((a) => (
+        <option key={a._id} value={a._id}>
+          {a.name} (
+            {designations.find((d) => d._id === a.designation || d.title === a.designation)?.title || a.designation}
+          )
+        </option>
+      ))
+    ) : (
+      <option disabled>No Associates Found</option>
+    )}
+  </select>
+)}
 
             </div>
 

@@ -11,6 +11,7 @@ import Associates from './pages/Associates.jsx';
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { SearchProvider } from './context/SearchContext.jsx';
+import Settings from './pages/Settings.jsx';
 
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
             <Route path="/customers" element={<Customers />} />
              <Route path="/reports" element={<Report />} />
             <Route path="/associates" element={<Associates />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
           {/* Catch-all: redirect unknown routes to login */}

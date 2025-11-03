@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Plus, Edit, Trash2, CheckCircle,Eye } from "lucide-react";
+import { Plus, Edit, Trash2, CheckCircle, Eye } from "lucide-react";
 import axiosInstance from "../lib/axios";
 import { notify } from "../utils/toast";
 import { useSearch } from "../context/SearchContext.jsx";
@@ -36,6 +36,22 @@ const Associates = () => {
         designation: "",
     });
 
+    const [designations, setDesignations] = useState([]);
+    // ✅ Fetch designations from backend
+    const fetchDesignations = async () => {
+        try {
+            const { data } = await axiosInstance.get("settings/get");
+            if (data?.settings?.designations?.length) {
+                setDesignations(data.settings.designations);
+            } else {
+                setDesignations([]);
+            }
+        } catch (error) {
+            console.error("Error fetching designations:", error);
+            toast.error("Failed to load designations");
+        }
+    };
+
     // ✅ Fetch all associates
     const fetchAssociates = async () => {
         try {
@@ -51,8 +67,12 @@ const Associates = () => {
     };
 
     useEffect(() => {
+
         fetchAssociates();
+        fetchDesignations();
     }, []);
+
+
 
     // ✅ Add new associate
     const handleAddAssociate = async () => {
@@ -235,7 +255,7 @@ const Associates = () => {
                                         }}
                                         className="text-green-600 hover:text-green-800 mr-2"
                                     >
-                                        <Eye size={18}/>
+                                        <Eye size={18} />
                                     </button>
                                     <button
                                         onClick={() => {
@@ -257,7 +277,7 @@ const Associates = () => {
                                         <Trash2 size={18} />
                                     </button>
 
-                                    
+
 
                                 </td>
                             </tr>
@@ -340,7 +360,7 @@ const Associates = () => {
                                     inputMode="numeric"
                                 />
                             </div>
-                            <select
+                            {/* <select
                                 value={newAssociate.designation}
                                 onChange={(e) =>
                                     setNewAssociate({ ...newAssociate, designation: e.target.value })
@@ -356,6 +376,24 @@ const Associates = () => {
                                         {slot}
                                     </option>
                                 ))}
+                            </select> */}
+                            <select
+                                value={newAssociate.designation}
+                                onChange={(e) =>
+                                    setNewAssociate({ ...newAssociate, designation: e.target.value })
+                                }
+                                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                            >
+                                <option value="">Select Designation</option>
+                                {designations.length > 0 ? (
+                                    designations.map((d, i) => (
+                                        <option key={i} value={d.title}>
+                                            {d.title}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option disabled>No designations available</option>
+                                )}
                             </select>
                         </div>
 
@@ -423,14 +461,15 @@ const Associates = () => {
                                 className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
                             >
                                 <option value="">Select Designation</option>
-                                {[
-                                    "Sales Executive",
-                                    "Sales Manager"
-                                ].map((slot) => (
-                                    <option key={slot} value={slot}>
-                                        {slot}
-                                    </option>
-                                ))}
+                                {designations.length > 0 ? (
+                                    designations.map((d, i) => (
+                                        <option key={i} value={d.title}>
+                                            {d.title}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option disabled>No designations available</option>
+                                )}
                             </select>
                         </div>
 
@@ -449,7 +488,7 @@ const Associates = () => {
                             >
                                 Update
                             </button>
-                           
+
 
 
                         </div>

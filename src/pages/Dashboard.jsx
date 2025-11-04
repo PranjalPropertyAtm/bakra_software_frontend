@@ -124,8 +124,8 @@ const Dashboard = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Orders Trend */}
-        <ChartCard title="📊 7-Day Revenue Trend">
+   
+        {/* <ChartCard title="📊 7-Day Revenue Trend">
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={orderTrend}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -135,7 +135,8 @@ const Dashboard = () => {
               <Line type="monotone" dataKey="totalCollection" stroke="#0f172a" />
             </LineChart>
           </ResponsiveContainer>
-        </ChartCard>
+        </ChartCard> */}
+        
 
         {/* Payment Mode Distribution */}
         {/* <ChartCard title="💳 Payment Mode Distribution">
@@ -159,7 +160,82 @@ const Dashboard = () => {
             </PieChart>
           </ResponsiveContainer>
         </ChartCard> */}
+
+         <ChartCard title="📊 7-Day Revenue Trend">
+    <div className="bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition-all duration-300">
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={orderTrend} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#2563eb" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis
+            dataKey="date"
+            tick={{ fill: "#475569", fontSize: 12 }}
+            tickLine={false}
+            axisLine={{ stroke: "#cbd5e1" }}
+          />
+          <YAxis
+            tick={{ fill: "#475569", fontSize: 12 }}
+            tickLine={false}
+            axisLine={{ stroke: "#cbd5e1" }}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "white",
+              borderRadius: "10px",
+              boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              border: "none",
+              color: "#1e293b",
+            }}
+            labelStyle={{ color: "#64748b", fontWeight: 500 }}
+            cursor={{ stroke: "#94a3b8", strokeDasharray: "3 3" }}
+          />
+          <Line
+            type="monotone"
+            dataKey="totalCollection"
+            stroke="#2563eb"
+            strokeWidth={3}
+            dot={{ r: 4, fill: "#fff", stroke: "#2563eb", strokeWidth: 2 }}
+            activeDot={{ r: 6 }}
+            fill="url(#revenueGradient)"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  </ChartCard>
+
         {/* 📅 Today's Order Status Distribution */}
+{/*         
+<ChartCard title="📅 Today's Order Summary">
+  <ResponsiveContainer width="100%" height={250}>
+    <PieChart>
+      <Pie
+        data={[
+          { name: "Delivered", value: data?.today?.todayDelivered || 0 },
+          { name: "Cancelled", value: data?.today?.todayCancelled || 0 },
+          { name: "Pending", value: data?.today?.todayPending || 0 },
+        ]}
+        dataKey="value"
+        nameKey="name"
+        cx="50%"
+        cy="50%"
+        outerRadius={83}
+        label={({ name, value }) => `${name}: ${value}`}
+      >
+        <Cell fill="#10b981" /> 
+        <Cell fill="#ef4444" /> 
+        <Cell fill="#f59e0b" /> 
+      </Pie>
+      <Legend />
+      <Tooltip />
+    </PieChart>
+  </ResponsiveContainer>
+</ChartCard> */}
 <ChartCard title="📅 Today's Order Summary">
   <ResponsiveContainer width="100%" height={250}>
     <PieChart>
@@ -189,59 +265,67 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Orders Table */}
-      <ChartCard title="🧾 Recent Orders">
-        <div className="overflow-x-auto">
-          <table className="min-w-full border text-sm text-slate-800">
-            <thead className="bg-slate-900 text-white">
-              <tr>
-                <th className="py-3 px-4 text-left">#</th>
-                <th className="py-3 px-4 text-left">Customer</th>
-                <th className="py-3 px-4 text-left">Phone</th>
-                <th className="py-3 px-4 text-left">Quantity</th>
-                <th className="py-3 px-4 text-left">Payment Mode</th>
-                <th className="py-3 px-4 text-left">Status</th>
-                <th className="py-3 px-4 text-left">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentOrders.length ? (
-                recentOrders.map((o, i) => (
-                  <tr key={i} className="border-b hover:bg-slate-50">
-                    <td className="px-3 py-2">{i + 1}</td>
-                    <td className="px-3 py-2">{o.customerId?.name}</td>
-                    <td className="px-3 py-2">{o.customerId?.phone}</td>
-                    <td className="px-3 py-2">{o.quantity}</td>
-                    <td className="px-3 py-2">{o.paymentMode || "-"}</td>
-                    <td
-                      className={`px-3 py-2 font-medium ${
-                        o.status === "Delivered"
-                          ? "text-green-600"
-                          : o.status === "Cancelled"
-                          ? "text-red-500"
-                          : "text-yellow-500"
-                      }`}
-                    >
-                      {o.status}
-                    </td>
-                    <td className="px-3 py-2">
-                      {new Date(o.createdAt).toISOString().split("T")[0]}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan="7"
-                    className="text-center text-slate-500 py-6 italic"
+    <ChartCard title="🧾 Recent Orders">
+  <div className="bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition-all duration-300">
+    <div className="overflow-x-auto rounded-lg">
+      <table className="min-w-full text-sm text-slate-700">
+        <thead>
+          <tr className="bg-slate-900 text-white uppercase text-xs tracking-wider">
+            <th className="py-3 px-4 text-left rounded-tl-lg">#</th>
+            <th className="py-3 px-4 text-left">Customer</th>
+            <th className="py-3 px-4 text-left">Phone</th>
+            <th className="py-3 px-4 text-left">Quantity</th>
+            <th className="py-3 px-4 text-left">Payment</th>
+            <th className="py-3 px-4 text-left">Status</th>
+            <th className="py-3 px-4 text-left rounded-tr-lg">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {recentOrders.length ? (
+            recentOrders.map((o, i) => (
+              <tr
+                key={i}
+                className="border-b hover:bg-slate-50 transition duration-200"
+              >
+                <td className="px-4 py-3 font-medium text-slate-600">{i + 1}</td>
+                <td className="px-4 py-3 font-medium">{o.customerId?.name}</td>
+                <td className="px-4 py-3">{o.customerId?.phone}</td>
+                <td className="px-4 py-3">{o.quantity}</td>
+                <td className="px-4 py-3 text-slate-600">{o.paymentMode || "-"}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      o.status === "Delivered"
+                        ? "bg-green-100 text-green-700"
+                        : o.status === "Cancelled"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
                   >
-                    No recent orders found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </ChartCard>
+                    {o.status}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-slate-500">
+                  {new Date(o.createdAt).toISOString().split("T")[0]}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td
+                colSpan="7"
+                className="text-center text-slate-500 py-8 italic bg-slate-50 rounded-b-lg"
+              >
+                No recent orders found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</ChartCard>
+
     </div>
   );
 };

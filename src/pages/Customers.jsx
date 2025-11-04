@@ -201,13 +201,13 @@ const Customers = () => {
                     onClick={() => handleEditCustomer(cust)}
                     className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
                   >
-                    <Edit size={16} /> Edit
+                    <Edit size={18} /> 
                   </button>
                   <button
                     onClick={() => handleViewOrders(cust._id)}
                     className="text-green-600 hover:text-green-800 flex items-center gap-1"
                   >
-                    <Eye size={16} /> View Orders
+                    <Eye size={18} /> 
                   </button>
                 </td>
 

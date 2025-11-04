@@ -324,7 +324,7 @@ const Orders = () => {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto bg-white rounded-xl shadow-md">
+   <div className="overflow-x-auto bg-white rounded-xl shadow-md">
         <table className="min-w-full table-auto text-sm text-gray-700">
           <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
             <tr>
@@ -436,20 +436,10 @@ const Orders = () => {
 
 
         </table>
-        {/* No orders after search */}
-        {/* {filteredOrders.length === 0 && (
-          <p className="text-center text-gray-500 py-6">
-            {loading ? "Loading orders..." : "No orders found."}
-          </p>
-        )} */}
 
 
-        {/* No orders */}
-        {/* {orders.length === 0 && (
-          <p className="text-center text-gray-500 py-6">
-            {loading ? "" : "No orders found."}
-          </p>
-        )} */}
+
+      
 
         {/* Loading State */}
         {loading && (

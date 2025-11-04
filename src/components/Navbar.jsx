@@ -327,9 +327,9 @@ const Navbar = ({ onLogout }) => {
             {showMenu && (
               <div className="absolute right-0 mt-3 bg-white shadow-lg rounded-lg w-48 border border-gray-100">
                 <ul className="text-gray-700 text-sm">
-                  <li className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                  {/* <li className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer">
                     <FiUser /> Profile
-                  </li>
+                  </li> */}
                   <li
                     onClick={onLogout}
                     className="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-red-500"

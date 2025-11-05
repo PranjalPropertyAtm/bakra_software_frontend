@@ -3,7 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { useReportsData } from "../hooks/useReportsData";
+import { useReportsData } from "../hooks/useReportsData.js";
 
 const monthNames = [
   "January","February","March","April","May","June",

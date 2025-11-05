@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { useReportsData } from "../hooks/useReportsData";
+
+// Example API response
+const apiData = {
+  success: true,
+  growth: [
+    { _id: { year: 2025, month: 11 }, newCustomers: 54 }
+  ]
+};
 
 const monthNames = [
   "January","February","March","April","May","June",
@@ -7,14 +14,10 @@ const monthNames = [
 ];
 
 const CustomerGrowthReport = () => {
-  const { data, loading, error } = useReportsData("reports/customer-growth");
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error loading data.</p>;
-
-  const growth = data?.growth || [];
+  const growth = apiData?.growth || [];
 
   // Group data by year & month
   const groupedByYear = {};
@@ -25,7 +28,8 @@ const CustomerGrowthReport = () => {
     groupedByYear[year][month] = g?.newCustomers || 0;
   });
 
-  const chartData = monthNames.map((month, i) => ({
+  // Prepare table data for selected year
+  const tableData = monthNames.map((month, i) => ({
     month,
     newCustomers: groupedByYear[selectedYear]?.[i + 1] || 0,
   }));
@@ -33,25 +37,27 @@ const CustomerGrowthReport = () => {
   const availableYears = Object.keys(groupedByYear).map(Number).sort((a, b) => b - a);
 
   return (
-    <div>
+    <div style={{ padding: 20 }}>
       <h2>Customer Growth</h2>
 
-      <label>
-        Year:{" "}
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(Number(e.target.value))}
-        >
-          {availableYears.map(year => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </select>
-      </label>
+      <div style={{ marginBottom: 10 }}>
+        <label>
+          Year:{" "}
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+          >
+            {availableYears.map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </label>
+      </div>
 
-      {chartData.every(c => c.newCustomers === 0) ? (
+      {tableData.every(c => c.newCustomers === 0) ? (
         <p>No customers found for {selectedYear}</p>
       ) : (
-        <table border="1" cellPadding="5" style={{ marginTop: 20 }}>
+        <table border="1" cellPadding="5" style={{ borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th>Month</th>
@@ -59,7 +65,7 @@ const CustomerGrowthReport = () => {
             </tr>
           </thead>
           <tbody>
-            {chartData.map((row, i) => (
+            {tableData.map((row, i) => (
               <tr key={i}>
                 <td>{row.month}</td>
                 <td>{row.newCustomers}</td>

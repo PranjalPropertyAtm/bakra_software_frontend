@@ -11,46 +11,55 @@ const monthNames = [
 ];
 
 const CustomerGrowthReport = () => {
-  // 🔹 Fetch data
   const { data, loading, error } = useReportsData("reports/customer-growth");
 
-  // 🔹 Current year as default
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
-  // 🔹 Loading & error handling
+  // 🧩 Loading & error UI
   if (loading) return <p className="text-slate-500">Loading customer growth...</p>;
-  if (error) return <p className="text-red-500">Error loading data</p>;
+  if (error) {
+    console.error("CustomerGrowthReport Error:", error);
+    return <p className="text-red-500">Failed to load data.</p>;
+  }
 
-  // ✅ Ensure data shape is correct
-  const growthData = Array.isArray(data?.growth) ? data.growth : [];
+  // ✅ Defensive parsing
+  const growthArray = Array.isArray(data?.growth) ? data.growth : [];
 
-  // 🧮 Group by year
   const groupedByYear = {};
-  growthData.forEach((g) => {
-    const year = g._id?.year ?? currentYear;
-    const month = g._id?.month ?? 0;
-    const count = g.newCustomers ?? 0;
+  growthArray.forEach((g) => {
+    const year = g?._id?.year ?? currentYear;
+    const month = g?._id?.month ?? 0;
+    const newCust = g?.newCustomers ?? 0;
     if (!groupedByYear[year]) groupedByYear[year] = {};
-    groupedByYear[year][month] = count;
+    groupedByYear[year][month] = newCust;
   });
 
-  // 🧮 Prepare chart data
+  // ✅ Avoid invalid data crash
   const chartData = useMemo(() => {
-    const monthsData = groupedByYear[selectedYear] || {};
+    if (!groupedByYear || typeof groupedByYear !== "object") return [];
+    const months = groupedByYear[selectedYear] || {};
     return monthNames.map((m, i) => ({
       month: m,
-      newCustomers: monthsData[i + 1] || 0,
+      newCustomers: Number(months[i + 1] || 0),
     }));
   }, [selectedYear, groupedByYear]);
 
-  const totalCustomers = chartData.reduce((a, b) => a + b.newCustomers, 0);
-  const availableYears = Object.keys(groupedByYear).map(Number).sort((a, b) => b - a);
+  const totalCustomers = chartData.reduce((sum, m) => sum + (m.newCustomers || 0), 0);
+  const availableYears = Object.keys(groupedByYear || {}).map(Number).sort((a, b) => b - a);
 
-  // 🧾 Render
+  // 🧾 If empty data
+  if (!chartData.length) {
+    return (
+      <div className="text-center py-10 bg-slate-50 border rounded-xl shadow-sm">
+        <p className="text-slate-500">No data available yet.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header + Filter */}
+      {/* Header & Filter */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h2 className="text-lg font-semibold text-slate-800">
           Customer Growth (Month-wise)
@@ -60,7 +69,7 @@ const CustomerGrowthReport = () => {
           onChange={(e) => setSelectedYear(Number(e.target.value))}
           className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700"
         >
-          {availableYears.length ? (
+          {availableYears.length > 0 ? (
             availableYears.map((year) => (
               <option key={year} value={year}>{year}</option>
             ))
@@ -70,9 +79,9 @@ const CustomerGrowthReport = () => {
         </select>
       </div>
 
-      {/* No data case */}
+      {/* No Data */}
       {totalCustomers === 0 ? (
-        <div className="text-center py-10 bg-slate-50 rounded-xl border shadow-sm">
+        <div className="text-center py-10 bg-slate-50 border rounded-xl shadow-sm">
           <p className="text-slate-500">No customers found for {selectedYear} 🚫</p>
         </div>
       ) : (

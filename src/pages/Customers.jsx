@@ -130,7 +130,7 @@ const Customers = () => {
 
       return (
         name.includes(search) ||
-        // phone.includes(search) ||
+        phone.includes(search) ||
         address.includes(search) ||
         payment.includes(search) ||
         totalOrders.includes(search) ||

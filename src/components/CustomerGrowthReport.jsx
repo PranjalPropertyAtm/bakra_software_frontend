@@ -1,9 +1,5 @@
-import React, { useState, useMemo } from "react";
-import {
-  AreaChart, Area, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
-import { useReportsData } from "../hooks/useReportsData.js";
+import React, { useState } from "react";
+import { useReportsData } from "../hooks/useReportsData";
 
 const monthNames = [
   "January","February","March","April","May","June",
@@ -12,125 +8,65 @@ const monthNames = [
 
 const CustomerGrowthReport = () => {
   const { data, loading, error } = useReportsData("reports/customer-growth");
-
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
-  // 🧩 Loading & error UI
-  if (loading) return <p className="text-slate-500">Loading customer growth...</p>;
-  if (error) {
-    console.error("CustomerGrowthReport Error:", error);
-    return <p className="text-red-500">Failed to load data.</p>;
-  }
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error loading data.</p>;
 
-  // ✅ Defensive parsing
-  const growthArray = Array.isArray(data?.growth) ? data.growth : [];
+  const growth = data?.growth || [];
 
+  // Group data by year & month
   const groupedByYear = {};
-  growthArray.forEach((g) => {
-    const year = g?._id?.year ?? currentYear;
-    const month = g?._id?.month ?? 0;
-    const newCust = g?.newCustomers ?? 0;
+  growth.forEach(g => {
+    const year = g?._id?.year || currentYear;
+    const month = g?._id?.month || 0;
     if (!groupedByYear[year]) groupedByYear[year] = {};
-    groupedByYear[year][month] = newCust;
+    groupedByYear[year][month] = g?.newCustomers || 0;
   });
 
-  // ✅ Avoid invalid data crash
-  const chartData = useMemo(() => {
-    if (!groupedByYear || typeof groupedByYear !== "object") return [];
-    const months = groupedByYear[selectedYear] || {};
-    return monthNames.map((m, i) => ({
-      month: m,
-      newCustomers: Number(months[i + 1] || 0),
-    }));
-  }, [selectedYear, groupedByYear]);
+  const chartData = monthNames.map((month, i) => ({
+    month,
+    newCustomers: groupedByYear[selectedYear]?.[i + 1] || 0,
+  }));
 
-  const totalCustomers = chartData.reduce((sum, m) => sum + (m.newCustomers || 0), 0);
-  const availableYears = Object.keys(groupedByYear || {}).map(Number).sort((a, b) => b - a);
-
-  // 🧾 If empty data
-  if (!chartData.length) {
-    return (
-      <div className="text-center py-10 bg-slate-50 border rounded-xl shadow-sm">
-        <p className="text-slate-500">No data available yet.</p>
-      </div>
-    );
-  }
+  const availableYears = Object.keys(groupedByYear).map(Number).sort((a, b) => b - a);
 
   return (
-    <div className="space-y-6">
-      {/* Header & Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h2 className="text-lg font-semibold text-slate-800">
-          Customer Growth (Month-wise)
-        </h2>
+    <div>
+      <h2>Customer Growth</h2>
+
+      <label>
+        Year:{" "}
         <select
           value={selectedYear}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700"
         >
-          {availableYears.length > 0 ? (
-            availableYears.map((year) => (
-              <option key={year} value={year}>{year}</option>
-            ))
-          ) : (
-            <option value={currentYear}>{currentYear}</option>
-          )}
+          {availableYears.map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
         </select>
-      </div>
+      </label>
 
-      {/* No Data */}
-      {totalCustomers === 0 ? (
-        <div className="text-center py-10 bg-slate-50 border rounded-xl shadow-sm">
-          <p className="text-slate-500">No customers found for {selectedYear} 🚫</p>
-        </div>
+      {chartData.every(c => c.newCustomers === 0) ? (
+        <p>No customers found for {selectedYear}</p>
       ) : (
-        <>
-          {/* Chart */}
-          <div className="w-full h-64 bg-slate-50 border rounded-xl p-4 shadow-sm">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorCust" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#0f172a" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#0f172a" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" stroke="#475569" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#475569" />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="newCustomers"
-                  stroke="#0f172a"
-                  fillOpacity={1}
-                  fill="url(#colorCust)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Table */}
-          <div className="overflow-x-auto border rounded-lg shadow-sm">
-            <table className="min-w-full text-sm text-slate-800">
-              <thead className="bg-slate-900 text-white">
-                <tr>
-                  <th className="px-3 py-2 text-left">Month</th>
-                  <th className="px-3 py-2 text-left">New Customers</th>
-                </tr>
-              </thead>
-              <tbody>
-                {chartData.map((row, i) => (
-                  <tr key={i} className="border-b hover:bg-slate-100">
-                    <td className="px-3 py-2">{row.month}</td>
-                    <td className="px-3 py-2">{row.newCustomers}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
+        <table border="1" cellPadding="5" style={{ marginTop: 20 }}>
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>New Customers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {chartData.map((row, i) => (
+              <tr key={i}>
+                <td>{row.month}</td>
+                <td>{row.newCustomers}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );

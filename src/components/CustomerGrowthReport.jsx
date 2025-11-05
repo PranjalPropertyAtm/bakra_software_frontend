@@ -103,7 +103,6 @@
 // };
 
 // export default CustomerGrowthReport;
-
 import React, { useState, useMemo } from "react";
 import {
   AreaChart,
@@ -130,26 +129,32 @@ const CustomerGrowthReport = () => {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
 
+  // 🧩 Loading / Error States
   if (loading) return <p className="text-slate-500">Loading customer growth...</p>;
-  if (error) return <p className="text-red-500">Failed to load data.</p>;
+  if (error) {
+    console.error("Customer growth fetch error:", error);
+    return <p className="text-red-500">Failed to load data ⚠️</p>;
+  }
 
-  // 🧮 Step 1: Group data by year
- const groupedByYear = {};
-if (Array.isArray(data?.growth)) {
-  data.growth.forEach((g) => {
-    const year = g._id?.year || currentYear;
-    const month = g._id?.month;
-    if (!groupedByYear[year]) groupedByYear[year] = {};
-    groupedByYear[year][month] = g.newCustomers;
-  });
-}
+  // 🧮 Step 1: Group data by year safely
+  const groupedByYear = {};
+
+  if (Array.isArray(data?.growth)) {
+    data.growth.forEach((g) => {
+      const year = g?._id?.year || currentYear;
+      const month = g?._id?.month;
+      const newCustomers = Number(g?.newCustomers || 0);
+      if (!groupedByYear[year]) groupedByYear[year] = {};
+      groupedByYear[year][month] = newCustomers;
+    });
+  }
 
   // 🧮 Step 2: Prepare chart data for selected year
   const chartData = useMemo(() => {
     const monthsData = groupedByYear[selectedYear] || {};
     return monthNames.map((month, index) => ({
       month,
-      newCustomers: monthsData[index + 1] || 0,
+      newCustomers: Number(monthsData[index + 1] || 0),
     }));
   }, [selectedYear, groupedByYear]);
 
@@ -190,7 +195,9 @@ if (Array.isArray(data?.growth)) {
       {/* 🧾 No Data Case */}
       {totalCustomers === 0 ? (
         <div className="text-center py-10 bg-slate-50 rounded-xl shadow-sm border">
-          <p className="text-slate-500">No customers found for {selectedYear} 🚫</p>
+          <p className="text-slate-500">
+            No customers found for {selectedYear} 🚫
+          </p>
         </div>
       ) : (
         <>
@@ -205,7 +212,11 @@ if (Array.isArray(data?.growth)) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="month" stroke="#475569" tick={{ fontSize: 12 }} />
+                <XAxis
+                  dataKey="month"
+                  stroke="#475569"
+                  tick={{ fontSize: 12 }}
+                />
                 <YAxis stroke="#475569" />
                 <Tooltip />
                 <Area

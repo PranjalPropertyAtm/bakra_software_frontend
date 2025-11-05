@@ -37,43 +37,51 @@ const CustomerGrowthReport = () => {
   const availableYears = Object.keys(groupedByYear).map(Number).sort((a, b) => b - a);
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Customer Growth</h2>
+    <div className="max-w-3xl mx-auto p-6">
+      <div className="bg-white shadow-md rounded-xl p-6 space-y-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h2 className="text-xl font-semibold text-slate-800">Customer Growth</h2>
+          <div>
+            <label className="text-sm text-slate-600 mr-2">Year:</label>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500"
+            >
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      <div style={{ marginBottom: 10 }}>
-        <label>
-          Year:{" "}
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(Number(e.target.value))}
-          >
-            {availableYears.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
-        </label>
+        {/* No Data */}
+        {tableData.every(c => c.newCustomers === 0) ? (
+          <div className="text-center py-10 text-slate-500">
+            No customers found for {selectedYear} 🚫
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border border-slate-200 rounded-lg text-sm text-slate-800">
+              <thead className="bg-slate-100">
+                <tr>
+                  <th className="px-4 py-2 text-left">Month</th>
+                  <th className="px-4 py-2 text-left">New Customers</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.map((row, i) => (
+                  <tr key={i} className="border-b border-slate-200 hover:bg-slate-50">
+                    <td className="px-4 py-2">{row.month}</td>
+                    <td className="px-4 py-2">{row.newCustomers}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-
-      {tableData.every(c => c.newCustomers === 0) ? (
-        <p>No customers found for {selectedYear}</p>
-      ) : (
-        <table border="1" cellPadding="5" style={{ borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th>Month</th>
-              <th>New Customers</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.map((row, i) => (
-              <tr key={i}>
-                <td>{row.month}</td>
-                <td>{row.newCustomers}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
     </div>
   );
 };

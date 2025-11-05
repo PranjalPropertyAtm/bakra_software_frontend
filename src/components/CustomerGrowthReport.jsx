@@ -134,13 +134,15 @@ const CustomerGrowthReport = () => {
   if (error) return <p className="text-red-500">Failed to load data.</p>;
 
   // 🧮 Step 1: Group data by year
-  const groupedByYear = {};
-  data?.growth?.forEach((g) => {
-    const year = g._id.year || currentYear; // safeguard if year missing
-    const month = g._id.month;
+ const groupedByYear = {};
+if (Array.isArray(data?.growth)) {
+  data.growth.forEach((g) => {
+    const year = g._id?.year || currentYear;
+    const month = g._id?.month;
     if (!groupedByYear[year]) groupedByYear[year] = {};
     groupedByYear[year][month] = g.newCustomers;
   });
+}
 
   // 🧮 Step 2: Prepare chart data for selected year
   const chartData = useMemo(() => {

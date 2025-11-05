@@ -166,11 +166,16 @@ const AdminSidebar = () => {
         </div>
 
         {/* Sidebar Title */}
-        <div className="p-5 flex items-center justify-between md:justify-center border-b border-slate-700">
+        {/* <div className="p-5 flex items-center justify-between md:justify-center border-b border-slate-700">
           <h2 className="text-xl font-bold tracking-wide text-gray-100">
             Kitchen Admin
           </h2>
-        </div>
+        </div> */}
+        <div className="p-5 flex items-center justify-center border-b border-slate-700">
+  <h2 className="text-xl font-bold tracking-wide text-gray-100">
+    Kitchen Admin
+  </h2>
+</div>
 
         {/* Menu List */}
         <nav className="mt-6">

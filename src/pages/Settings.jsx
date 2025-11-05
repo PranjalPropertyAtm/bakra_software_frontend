@@ -419,7 +419,8 @@ const handleChangePassword = async () => {
         🔒 Change Password
       </h2>
 
-      <div className="flex flex-col gap-4 max-w-sm">
+       <form autoComplete="off" className="flex flex-col gap-4 max-w-sm">
+     
         {/* Current Password */}
         <div className="relative">
           <input
@@ -507,7 +508,7 @@ const handleChangePassword = async () => {
         >
           Update Password
         </button>
-      </div>
+     </form>
 
       {/* ✅ Confirmation Modal */}
       {showPasswordConfirm && (

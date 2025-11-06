@@ -12,6 +12,8 @@ const Customers = () => {
   const [showOrdersModal, setShowOrdersModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [customerOrders, setCustomerOrders] = useState([]);
+  const [ordersPage, setOrdersPage] = useState(1);
+  const ordersPerPage = 6;
 
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 10;
@@ -108,6 +110,7 @@ const Customers = () => {
       if (res.data.success) {
         setSelectedCustomer(res.data.customer);
         setCustomerOrders(res.data.orders);
+        setOrdersPage(1);
         setShowOrdersModal(true);
       }
     } catch (err) {
@@ -435,14 +438,19 @@ const Customers = () => {
               </thead>
               <tbody>
                 {customerOrders.length > 0 ? (
-                  customerOrders.map((order) => (
-                    <tr key={order._id} className="border-t">
-                      <td className="p-2">{order.orderDate}</td>
-                      <td className="p-2">{order.quantity}</td>
-                      <td className="p-2">{order.paymentMode}</td>
-                      <td className="p-2">{order.status}</td>
-                    </tr>
-                  ))
+                  (() => {
+                    const indexOfLastOrder = ordersPage * ordersPerPage;
+                    const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+                    const currentOrders = customerOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+                    return currentOrders.map((order, idx) => (
+                      <tr key={order._id} className="border-t">
+                        <td className="p-2">{order.orderDate}</td>
+                        <td className="p-2">{order.quantity}</td>
+                        <td className="p-2">{order.paymentMode}</td>
+                        <td className="p-2">{order.status}</td>
+                      </tr>
+                    ));
+                  })()
                 ) : (
                   <tr>
                     <td
@@ -455,6 +463,28 @@ const Customers = () => {
                 )}
               </tbody>
             </table>
+            {/* Orders Pagination */}
+            {customerOrders.length > ordersPerPage && (
+              <div className="flex justify-center items-center gap-3 mt-4">
+                <button
+                  disabled={ordersPage === 1}
+                  onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                <span className="text-gray-600 text-sm">
+                  Page {ordersPage} of {Math.ceil(customerOrders.length / ordersPerPage)}
+                </span>
+                <button
+                  disabled={ordersPage === Math.ceil(customerOrders.length / ordersPerPage)}
+                  onClick={() => setOrdersPage((p) => Math.min(Math.ceil(customerOrders.length / ordersPerPage), p + 1))}
+                  className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

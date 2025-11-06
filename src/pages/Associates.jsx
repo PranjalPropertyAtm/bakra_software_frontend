@@ -13,6 +13,8 @@ const Associates = () => {
     const [loading, setLoading] = useState(false);
     const [viewOrdersModal, setViewOrdersModal] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const ordersPerPage = 6;
     const [selectedAssociateName, setSelectedAssociateName] = useState("");
     const [loadingOrders, setLoadingOrders] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -151,6 +153,7 @@ const Associates = () => {
     const handleViewOrders = async (associate) => {
         try {
             setSelectedAssociateName(associate.name);
+            setOrdersPage(1);
             setLoadingOrders(true);
             const res = await axiosInstance.get(`/associates/by-associate/${associate._id}`);
             if (res.data.success) {
@@ -173,6 +176,7 @@ const Associates = () => {
 
         try {
             setLoading(true);
+            setOrdersPage(1);
             const res = await axiosInstance.get(`/associates/by-associate/${associate._id}`);
             if (res.data.success) {
                 setOrders(res.data.orders);
@@ -549,19 +553,46 @@ const Associates = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {orders.map((order, index) => (
-                                            <tr key={order._id} className="border-b hover:bg-gray-50 transition">
-                                                <td className="py-3 px-4">{index + 1}</td>
-                                                <td className="py-3 px-4 font-medium">{order.customerId?.name || "N/A"}</td>
-                                                <td className="py-3 px-4">{order.customerId?.phone || "-"}</td>
-                                                <td className="py-3 px-4">{order.quantity}</td>
-                                                <td className="py-3 px-4">₹ {order.amount}</td>
-                                                <td className="py-3 px-4">{order.paymentMode}</td>
-                                                <td className="py-3 px-4">{order.status}</td>
-                                            </tr>
-                                        ))}
+                                        {(() => {
+                                            const indexOfLastOrder = ordersPage * ordersPerPage;
+                                            const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+                                            const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+                                            return currentOrders.map((order, index) => (
+                                                <tr key={order._id} className="border-b hover:bg-gray-50 transition">
+                                                    <td className="py-3 px-4">{indexOfFirstOrder + index + 1}</td>
+                                                    <td className="py-3 px-4 font-medium">{order.customerId?.name || "N/A"}</td>
+                                                    <td className="py-3 px-4">{order.customerId?.phone || "-"}</td>
+                                                    <td className="py-3 px-4">{order.quantity}</td>
+                                                    <td className="py-3 px-4">₹ {order.amount}</td>
+                                                    <td className="py-3 px-4">{order.paymentMode}</td>
+                                                    <td className="py-3 px-4">{order.status}</td>
+                                                </tr>
+                                            ));
+                                        })()}
                                     </tbody>
                                 </table>
+                                {/* Orders Pagination */}
+                                {orders.length > ordersPerPage && (
+                                    <div className="flex justify-center items-center gap-3 mt-4">
+                                        <button
+                                            disabled={ordersPage === 1}
+                                            onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                                            className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                                        >
+                                            Prev
+                                        </button>
+                                        <span className="text-gray-600 text-sm">
+                                            Page {ordersPage} of {Math.ceil(orders.length / ordersPerPage)}
+                                        </span>
+                                        <button
+                                            disabled={ordersPage === Math.ceil(orders.length / ordersPerPage)}
+                                            onClick={() => setOrdersPage((p) => Math.min(Math.ceil(orders.length / ordersPerPage), p + 1))}
+                                            className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 

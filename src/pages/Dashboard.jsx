@@ -125,41 +125,7 @@ const Dashboard = () => {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
    
-        {/* <ChartCard title="📊 7-Day Revenue Trend">
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={orderTrend}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="totalCollection" stroke="#0f172a" />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartCard> */}
         
-
-        {/* Payment Mode Distribution */}
-        {/* <ChartCard title="💳 Payment Mode Distribution">
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={paymentModeData}
-                dataKey="value"
-                nameKey="mode"
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label
-              >
-                {paymentModeData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Legend />
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartCard> */}
 
          <ChartCard title="📊 7-Day Revenue Trend">
     <div className="bg-white rounded-2xl shadow-md p-4 hover:shadow-lg transition-all duration-300">
@@ -210,32 +176,7 @@ const Dashboard = () => {
   </ChartCard>
 
         {/* 📅 Today's Order Status Distribution */}
-{/*         
-<ChartCard title="📅 Today's Order Summary">
-  <ResponsiveContainer width="100%" height={250}>
-    <PieChart>
-      <Pie
-        data={[
-          { name: "Delivered", value: data?.today?.todayDelivered || 0 },
-          { name: "Cancelled", value: data?.today?.todayCancelled || 0 },
-          { name: "Pending", value: data?.today?.todayPending || 0 },
-        ]}
-        dataKey="value"
-        nameKey="name"
-        cx="50%"
-        cy="50%"
-        outerRadius={83}
-        label={({ name, value }) => `${name}: ${value}`}
-      >
-        <Cell fill="#10b981" /> 
-        <Cell fill="#ef4444" /> 
-        <Cell fill="#f59e0b" /> 
-      </Pie>
-      <Legend />
-      <Tooltip />
-    </PieChart>
-  </ResponsiveContainer>
-</ChartCard> */}
+
 <ChartCard title="📅 Today's Order Summary">
   <ResponsiveContainer width="100%" height={250}>
     <PieChart>

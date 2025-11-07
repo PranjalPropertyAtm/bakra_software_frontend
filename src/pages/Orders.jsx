@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { Plus, Edit, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import Loader from "../components/Loader";
 import axiosInstance from "../lib/axios.js";
 import { notify } from "../utils/toast.js";
 import { useSearch } from "../context/SearchContext.jsx";
@@ -11,6 +12,9 @@ const Orders = () => {
   const [loading, setLoading] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showDeliverModal, setShowDeliverModal] = useState(false);
+  const [updatingDelivery, setUpdatingDelivery] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
+  const [editingOrder, setEditingOrder] = useState(false);
   const [cancelData, setCancelData] = useState({ id: "", reason: "" });
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -64,7 +68,7 @@ const Orders = () => {
     fetchAssociates();
   }, []);
 
-   const [designations, setDesignations] = useState([]);
+  const [designations, setDesignations] = useState([]);
   // ✅ Fetch designations from backend
   const fetchDesignations = async () => {
     try {
@@ -79,7 +83,7 @@ const Orders = () => {
       toast.error("Failed to load designations");
     }
   };
-  
+
   // ✅ Fetch orders
   const fetchOrders = async () => {
     try {
@@ -92,28 +96,30 @@ const Orders = () => {
       setLoading(false);
     }
   };
-   const [timeSlots, setTimeSlots] = useState([]);
-     const [quantities, setQuantities] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [quantities, setQuantities] = useState([]);
+  const [addingOrder, setAddingOrder] = useState(false);
 
   const fetchSettings = async () => {
-      try {
-        const res = await axiosInstance.get("settings/get");
-        const data = res.data.settings;
+    try {
+      const res = await axiosInstance.get("settings/get");
+      const data = res.data.settings;
 
-        // Time slots & quantities extract karo
-        setTimeSlots(data.timeSlots.map((t) => t.slot));
-        setQuantities(data.prices.map((p) => p.quantity));
-      } catch (error) {
-        console.error("Error fetching settings:", error);
-      }
-    };
+      // Time slots & quantities extract karo
+      setTimeSlots(data.timeSlots.map((t) => t.slot));
+      setQuantities(data.prices.map((p) => p.quantity));
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+    }
+  };
 
   // ✅ Add new order
   const handleAddOrder = async () => {
+    if (addingOrder) return;
+
     const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, source, associateId } = newOrder;
 
-
-
+    // perform client-side validation first, do not set loading until validation passes
     if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode || !source) {
       notify.warning("Please fill all required fields!");
       return;
@@ -128,6 +134,8 @@ const Orders = () => {
       return;
     }
 
+    // all validations passed — now show loader and send request
+    setAddingOrder(true);
     try {
       const res = await axiosInstance.post("/orders/add", newOrder);
       if (res.data.success) {
@@ -149,14 +157,16 @@ const Orders = () => {
     } catch (error) {
       console.error("❌ Error adding order:", error);
       notify.error(error.response?.data?.message || "Failed to add order!");
+    } finally {
+      setAddingOrder(false);
     }
   };
 
   // 🟢 Handle edit order submit
   const handleEditOrder = async () => {
+    if (editingOrder) return;
+    
     const { name, phone, address, deliveryTimeSlot, quantity, paymentMode, _id, source, associateId } = editOrder;
-
-
 
     if (!name || !phone || !address || !deliveryTimeSlot || !quantity || !paymentMode || !source) {
       notify.warning("Please fill all required fields!");
@@ -173,6 +183,7 @@ const Orders = () => {
       return;
     }
 
+    setEditingOrder(true);
     try {
       const res = await axiosInstance.put(`/orders/edit/${_id}`, editOrder);
       if (res.data.success) {
@@ -183,6 +194,8 @@ const Orders = () => {
     } catch (error) {
       console.error("❌ Error editing order:", error);
       notify.error(error.response?.data?.message || "Failed to update order!");
+    } finally {
+      setEditingOrder(false);
     }
   };
 
@@ -223,11 +236,14 @@ const Orders = () => {
 
   // ✅ Cancel modal confirm
   const handleCancelOrder = async () => {
+    if (cancellingOrder) return;
+
     if (!cancelData.reason.trim()) {
       notify.error("Please Enter a Cancellation Reason");
       return;
     }
 
+    setCancellingOrder(true);
     try {
       const res = await axiosInstance.put(`orders/${cancelData.id}/status`, {
         status: "Cancelled",
@@ -243,6 +259,8 @@ const Orders = () => {
     } catch (err) {
       console.error("❌ Cancel error:", err);
       notify.error("Error cancelling order!");
+    } finally {
+      setCancellingOrder(false);
     }
   };
 
@@ -324,7 +342,7 @@ const Orders = () => {
       </div>
 
       {/* Table */}
-   <div className="overflow-x-auto bg-white rounded-xl shadow-md">
+      <div className="overflow-x-auto bg-white rounded-xl shadow-md">
         <table className="min-w-full table-auto text-sm text-gray-700">
           <thead className="bg-gray-100 text-gray-700 uppercase text-xs">
             <tr>
@@ -379,19 +397,7 @@ const Orders = () => {
                   </button> */}
                   <button
                     disabled={["Delivered", "Cancelled"].includes(order.status)}
-                    // onClick={() => {
-                    //   setEditOrder({
-                    //     _id: order._id,
-                    //     name: order.customerId?.name || "",
-                    //     phone: order.customerId?.phone || "",
-                    //     address: order.customerId?.address || "",
-                    //     source: order.source || "Call",
-                    //     deliveryTimeSlot: order.deliveryTimeSlot,
-                    //     quantity: order.quantity,
-                    //     paymentMode: order.paymentMode,
-                    //   });
-                    //   setShowEditModal(true);
-                    // }}
+
                     onClick={() => {
                       setEditOrder({
                         _id: order._id,
@@ -439,7 +445,7 @@ const Orders = () => {
 
 
 
-      
+
 
         {/* Loading State */}
         {loading && (
@@ -478,7 +484,12 @@ const Orders = () => {
       {/* Cancel Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-3">
-          <div className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg">
+          <div className="bg-white w-full max-w-md p-6 rounded-lg shadow-lg relative">
+            {cancellingOrder && (
+              <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-lg">
+                <Loader text="Cancelling order..." />
+              </div>
+            )}
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
               <XCircle className="text-red-600" /> Cancel Order
             </h2>
@@ -488,21 +499,24 @@ const Orders = () => {
               onChange={(e) =>
                 setCancelData({ ...cancelData, reason: e.target.value })
               }
+              disabled={cancellingOrder}
               rows={3}
-              className="w-full border rounded-md p-2 outline-none focus:ring-2 focus:ring-red-500"
+              className="w-full border rounded-md p-2 outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <div className="flex justify-end mt-4 gap-2">
               <button
-                onClick={() => setShowCancelModal(false)}
-                className="px-4 py-2 border rounded-md hover:bg-gray-100"
+                onClick={() => !cancellingOrder && setShowCancelModal(false)}
+                disabled={cancellingOrder}
+                className="px-4 py-2 border rounded-md hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Close
               </button>
               <button
                 onClick={handleCancelOrder}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                disabled={cancellingOrder}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Confirm Cancel
+                {cancellingOrder ? 'Cancelling...' : 'Confirm Cancel'}
               </button>
             </div>
           </div>
@@ -512,7 +526,12 @@ const Orders = () => {
       {/* Delivey Modal */}
       {showDeliverModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-md relative">
+            {updatingDelivery && (
+              <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-xl">
+                <Loader text="Updating status..." />
+              </div>
+            )}
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Confirm Delivery</h2>
             <p className="text-gray-600 mb-5">
               Are you sure you want to mark this order as <b>Delivered</b>?
@@ -520,13 +539,16 @@ const Orders = () => {
 
             <div className="flex justify-end gap-3">
               <button
-                onClick={() => setShowDeliverModal(false)}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+                onClick={() => !updatingDelivery && setShowDeliverModal(false)}
+                disabled={updatingDelivery}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={async () => {
+                  if (updatingDelivery) return;
+                  setUpdatingDelivery(true);
                   try {
                     const res = await axiosInstance.put(`orders/${selectedOrder}/status`, {
                       status: pendingStatus,
@@ -539,11 +561,14 @@ const Orders = () => {
                   } catch (err) {
                     console.error("❌ Delivery update error:", err);
                     notify.error("Failed to update order!");
+                  } finally {
+                    setUpdatingDelivery(false);
                   }
                 }}
-                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition"
+                disabled={updatingDelivery}
+                className="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Yes, Deliver
+                {updatingDelivery ? 'Updating...' : 'Yes, Deliver'}
               </button>
             </div>
           </div>
@@ -553,7 +578,12 @@ const Orders = () => {
       {/* Add Order Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
-          <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl">
+          <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative">
+            {addingOrder && (
+              <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-2xl">
+                <Loader text="Adding order..." />
+              </div>
+            )}
             <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
               <CheckCircle className="text-green-600" /> Add New Order
             </h2>
@@ -595,7 +625,7 @@ const Orders = () => {
                 />
               </div>
 
-             
+
               <textarea
                 placeholder="Delivery Address"
                 value={newOrder.address}
@@ -606,7 +636,8 @@ const Orders = () => {
                 rows={2}
               />
 
-              {/* <select
+
+              <select
                 value={newOrder.deliveryTimeSlot}
                 onChange={(e) =>
                   setNewOrder({ ...newOrder, deliveryTimeSlot: e.target.value })
@@ -614,36 +645,18 @@ const Orders = () => {
                 className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="">Select Delivery Time</option>
-                {[
-                  "7PM - 7.30PM",
-                  "7.30PM - 8PM",
-                  "8PM - 8.30PM",
-                  "8.30PM - 9PM",
-                  "9PM - 9.30PM",
-                  "9.30PM - 10PM",
-                ].map((slot) => (
+                {timeSlots.map((slot) => (
                   <option key={slot} value={slot}>
                     {slot}
                   </option>
                 ))}
-              </select> */}
-               <select
-        value={newOrder.deliveryTimeSlot}
-        onChange={(e) =>
-          setNewOrder({ ...newOrder, deliveryTimeSlot: e.target.value })
-        }
-        className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-      >
-        <option value="">Select Delivery Time</option>
-        {timeSlots.map((slot) => (
-          <option key={slot} value={slot}>
-            {slot}
-          </option>
-        ))}
-      </select>
+              </select>
 
 
-              {/* <select
+
+
+              {/* Quantity Dropdown */}
+              <select
                 value={newOrder.quantity}
                 onChange={(e) =>
                   setNewOrder({ ...newOrder, quantity: e.target.value })
@@ -651,26 +664,12 @@ const Orders = () => {
                 className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
               >
                 <option value="">Select Quantity</option>
-                <option value="Quarter">Quarter</option>
-                <option value="Half">Half</option>
-                <option value="Full">Full</option>
-              </select> */}
-
-               {/* Quantity Dropdown */}
-      <select
-        value={newOrder.quantity}
-        onChange={(e) =>
-          setNewOrder({ ...newOrder, quantity: e.target.value })
-        }
-        className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-      >
-        <option value="">Select Quantity</option>
-        {quantities.map((q) => (
-          <option key={q} value={q}>
-            {q}
-          </option>
-        ))}
-      </select>
+                {quantities.map((q) => (
+                  <option key={q} value={q}>
+                    {q}
+                  </option>
+                ))}
+              </select>
 
               <select
                 value={newOrder.paymentMode}
@@ -687,63 +686,65 @@ const Orders = () => {
               </select>
 
               {/* 🧭 Source Selection */}
-             
-              <select
-  value={newOrder.source}
-  onChange={(e) => {
-    const value = e.target.value;
-    if (value === "Associates") {
-      setNewOrder({ ...newOrder, source: value, associateId: "" });
-    } else {
-      setNewOrder({ ...newOrder, source: value, associateId: null });
-    }
-  }}
-  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
->
-  <option value="">Select Source</option>
-  <option value="WhatsApp">WhatsApp</option>
-  <option value="Call">Call</option>
-  <option value="Associates">Associates</option>
-</select>
 
-{/* 👥 Associate Dropdown — only show when “Associates” selected */}
-{newOrder.source === "Associates" && (
-  <select
-    value={newOrder.associateId || ""}
-    onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
-    className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-  >
-    <option value="">Select Associate</option>
-    {loadingAssociates ? (
-      <option disabled>Loading...</option>
-    ) : associates.length > 0 ? (
-      associates.map((a) => (
-        <option key={a._id} value={a._id}>
-          {a.name} (
-            {designations.find((d) => d._id === a.designation || d.title === a.designation)?.title || a.designation}
-          )
-        </option>
-      ))
-    ) : (
-      <option disabled>No Associates Found</option>
-    )}
-  </select>
-)}
+              <select
+                value={newOrder.source}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "Associates") {
+                    setNewOrder({ ...newOrder, source: value, associateId: "" });
+                  } else {
+                    setNewOrder({ ...newOrder, source: value, associateId: null });
+                  }
+                }}
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value="">Select Source</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Call">Call</option>
+                <option value="Associates">Associates</option>
+              </select>
+
+              {/* 👥 Associate Dropdown — only show when “Associates” selected */}
+              {newOrder.source === "Associates" && (
+                <select
+                  value={newOrder.associateId || ""}
+                  onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
+                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Select Associate</option>
+                  {loadingAssociates ? (
+                    <option disabled>Loading...</option>
+                  ) : associates.length > 0 ? (
+                    associates.map((a) => (
+                      <option key={a._id} value={a._id}>
+                        {a.name} (
+                        {designations.find((d) => d._id === a.designation || d.title === a.designation)?.title || a.designation}
+                        )
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No Associates Found</option>
+                  )}
+                </select>
+              )}
 
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
               <button
-                onClick={() => setShowModal(false)}
-                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
+                onClick={() => !addingOrder && setShowModal(false)}
+                disabled={addingOrder}
+                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddOrder}
-                className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+                disabled={addingOrder}
+                className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add Order
+                {addingOrder ? 'Adding...' : 'Add Order'}
               </button>
             </div>
           </div>
@@ -751,7 +752,12 @@ const Orders = () => {
       )}
       {showEditModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
-          <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl">
+          <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative">
+            {editingOrder && (
+              <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-2xl">
+                <Loader text="Updating order..." />
+              </div>
+            )}
             <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
               <Edit className="text-blue-600" /> Edit Order
             </h2>
@@ -764,7 +770,8 @@ const Orders = () => {
                 onChange={(e) =>
                   setEditOrder({ ...editOrder, name: e.target.value.trimStart() })
                 }
-                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={editingOrder}
+                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
 
               <div className="flex items-center border rounded-md px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500">
@@ -778,9 +785,10 @@ const Orders = () => {
                     if (input.length > 10) input = input.slice(0, 10);
                     setEditOrder({ ...editOrder, phone: input });
                   }}
-                  className="flex-1 ml-2 outline-none text-slate-900"
+                  className="flex-1 ml-2 outline-none text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   maxLength="10"
                   inputMode="numeric"
+                  disabled={editingOrder}
                 />
               </div>
 
@@ -790,89 +798,60 @@ const Orders = () => {
                 onChange={(e) =>
                   setEditOrder({ ...editOrder, address: e.target.value.trimStart() })
                 }
-                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 rows={2}
+                disabled={editingOrder}
               />
 
-              {/* <select
+
+
+              <select
                 value={editOrder.deliveryTimeSlot}
                 onChange={(e) =>
                   setEditOrder({ ...editOrder, deliveryTimeSlot: e.target.value })
                 }
-                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={editingOrder}
               >
                 <option value="">Select Delivery Time</option>
-                {[
-                  "7PM - 7.30PM",
-                  "7.30PM - 8PM",
-                  "8PM - 8.30PM",
-                  "8.30PM - 9PM",
-                  "9PM - 9.30PM",
-                  "9.30PM - 10PM",
-                ].map((slot) => (
-                  <option key={slot} value={slot}>
-                    {slot}
-                  </option>
-                ))}
+                {timeSlots.length > 0 ? (
+                  timeSlots.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {slot}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No Time Slots Found</option>
+                )}
               </select>
 
+              {/* 📦 Quantity Dropdown */}
               <select
                 value={editOrder.quantity}
                 onChange={(e) =>
                   setEditOrder({ ...editOrder, quantity: e.target.value })
                 }
-                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={editingOrder}
               >
                 <option value="">Select Quantity</option>
-                <option value="Quarter">Quarter</option>
-                <option value="Half">Half</option>
-                <option value="Full">Full</option>
-              </select> */}
-
-            <select
-  value={editOrder.deliveryTimeSlot}
-  onChange={(e) =>
-    setEditOrder({ ...editOrder, deliveryTimeSlot: e.target.value })
-  }
-  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
->
-  <option value="">Select Delivery Time</option>
-  {timeSlots.length > 0 ? (
-    timeSlots.map((slot) => (
-      <option key={slot} value={slot}>
-        {slot}
-      </option>
-    ))
-  ) : (
-    <option disabled>No Time Slots Found</option>
-  )}
-</select>
-
-{/* 📦 Quantity Dropdown */}
-<select
-  value={editOrder.quantity}
-  onChange={(e) =>
-    setEditOrder({ ...editOrder, quantity: e.target.value })
-  }
-  className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
->
-  <option value="">Select Quantity</option>
-  {quantities.length > 0 ? (
-    quantities.map((q) => (
-      <option key={q} value={q}>
-        {q}
-      </option>
-    ))
-  ) : (
-    <option disabled>No Quantities Found</option>
-  )}
-</select>
+                {quantities.length > 0 ? (
+                  quantities.map((q) => (
+                    <option key={q} value={q}>
+                      {q}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No Quantities Found</option>
+                )}
+              </select>
               <select
                 value={editOrder.paymentMode}
                 onChange={(e) =>
                   setEditOrder({ ...editOrder, paymentMode: e.target.value })
                 }
-                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={editingOrder}
               >
                 <option value="">Select Payment Mode</option>
                 <option value="Cash on Delivery">Cash on Delivery</option>
@@ -891,7 +870,8 @@ const Orders = () => {
                     setEditOrder({ ...editOrder, source: value, associateId: null });
                   }
                 }}
-                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={editingOrder}
               >
                 <option value="">Select Source</option>
 
@@ -906,7 +886,8 @@ const Orders = () => {
                 <select
                   value={editOrder.associateId || ""}
                   onChange={(e) => setEditOrder({ ...editOrder, associateId: e.target.value })}
-                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={editingOrder}
                 >
                   <option value="">Select Associate</option>
                   {loadingAssociates ? (
@@ -928,16 +909,18 @@ const Orders = () => {
 
             <div className="flex justify-end gap-3 mt-6">
               <button
-                onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
+                onClick={() => !editingOrder && setShowEditModal(false)}
+                disabled={editingOrder}
+                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={handleEditOrder}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+                disabled={editingOrder}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Update Order
+                {editingOrder ? 'Updating...' : 'Update Order'}
               </button>
             </div>
           </div>

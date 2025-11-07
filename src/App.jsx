@@ -23,7 +23,7 @@ function App() {
           <Route path='/login' element={<Login />} />
 
           <Route path='/' element={<ProtectedRoutes><AdminLayout /></ProtectedRoutes>} >
-            <Route index element={<Navigate to="/dashboard" />} replace />
+            <Route index element={<Navigate to="/login" />} replace />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/customers" element={<Customers />} />

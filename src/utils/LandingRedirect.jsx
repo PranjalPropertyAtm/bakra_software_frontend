@@ -3,12 +3,12 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/authContext";
 import Loader from "../components/Loader";
 
-const ProtectedRoutes = ({ children }) => {
+const LandingRedirect = () => {
   const { user, loading } = useAuth();
 
-  if (loading) return <Loader text="Loading dashboard..." />;
+  if (loading) return <Loader text="Loading..." />;
 
-  return user ? children : <Navigate to="/login" replace />;
+  return user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 };
 
-export default ProtectedRoutes;
+export default LandingRedirect;

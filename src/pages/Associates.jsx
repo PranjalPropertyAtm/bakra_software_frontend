@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Plus, Edit, Trash2, CheckCircle, Eye } from "lucide-react";
+import Loader from "../components/Loader";
 import axiosInstance from "../lib/axios";
 import { notify } from "../utils/toast";
 import { useSearch } from "../context/SearchContext.jsx";
@@ -11,8 +12,12 @@ const Associates = () => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedAssociate, setSelectedAssociate] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [addingAssociate, setAddingAssociate] = useState(false);
+    const [editingAssociate, setEditingAssociate] = useState(false);
     const [viewOrdersModal, setViewOrdersModal] = useState(false);
     const [orders, setOrders] = useState([]);
+    const [ordersPage, setOrdersPage] = useState(1);
+    const ordersPerPage = 6;
     const [selectedAssociateName, setSelectedAssociateName] = useState("");
     const [loadingOrders, setLoadingOrders] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -76,6 +81,8 @@ const Associates = () => {
 
     // ✅ Add new associate
     const handleAddAssociate = async () => {
+        if (addingAssociate) return;
+
         const { name, phone, email, region, designation } = newAssociate;
         if (!name || !phone || !email || !region || !designation) {
             notify.warning("Please fill all required fields!");
@@ -87,6 +94,7 @@ const Associates = () => {
             return;
         }
 
+        setAddingAssociate(true);
         try {
             const res = await axiosInstance.post("/associates/add", newAssociate);
             if (res.data.success) {
@@ -104,11 +112,15 @@ const Associates = () => {
         } catch (error) {
             console.error("❌ Error adding associate:", error);
             notify.error("Failed to add associate!");
+        } finally {
+            setAddingAssociate(false);
         }
     };
 
     // ✅ Edit associate
     const handleEditAssociate = async () => {
+        if (editingAssociate) return;
+
         const { name, phone, email, region, designation, _id } = editAssociate;
         if (!name || !phone || !email || !region || !designation) {
             notify.warning("Please fill all required fields!");
@@ -120,6 +132,7 @@ const Associates = () => {
             return;
         }
 
+        setEditingAssociate(true);
         try {
             const res = await axiosInstance.put(`/associates/update/${_id}`, editAssociate);
             if (res.data.success) {
@@ -130,6 +143,8 @@ const Associates = () => {
         } catch (error) {
             console.error("❌ Error updating associate:", error);
             notify.error("Failed to update associate!");
+        } finally {
+            setEditingAssociate(false);
         }
     };
 
@@ -151,6 +166,7 @@ const Associates = () => {
     const handleViewOrders = async (associate) => {
         try {
             setSelectedAssociateName(associate.name);
+            setOrdersPage(1);
             setLoadingOrders(true);
             const res = await axiosInstance.get(`/associates/by-associate/${associate._id}`);
             if (res.data.success) {
@@ -173,6 +189,7 @@ const Associates = () => {
 
         try {
             setLoading(true);
+            setOrdersPage(1);
             const res = await axiosInstance.get(`/associates/by-associate/${associate._id}`);
             if (res.data.success) {
                 setOrders(res.data.orders);
@@ -318,7 +335,12 @@ const Associates = () => {
             {/* Add Modal */}
             {showModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
-                    <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl">
+                    <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative">
+                        {addingAssociate && (
+                            <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-2xl">
+                                <Loader text="Adding associate..." />
+                            </div>
+                        )}
                         <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
                             <CheckCircle className="text-green-600" /> Add Associate
                         </h2>
@@ -333,7 +355,8 @@ const Associates = () => {
                                     onChange={(e) =>
                                         setNewAssociate({ ...newAssociate, [field]: e.target.value.trimStart() })
                                     }
-                                    className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                                    disabled={addingAssociate}
+                                    className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             ))}
 
@@ -382,7 +405,8 @@ const Associates = () => {
                                 onChange={(e) =>
                                     setNewAssociate({ ...newAssociate, designation: e.target.value })
                                 }
-                                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                                disabled={addingAssociate}
+                                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <option value="">Select Designation</option>
                                 {designations.length > 0 ? (
@@ -399,16 +423,18 @@ const Associates = () => {
 
                         <div className="flex justify-end gap-3 mt-6">
                             <button
-                                onClick={() => setShowModal(false)}
-                                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
+                                onClick={() => !addingAssociate && setShowModal(false)}
+                                disabled={addingAssociate}
+                                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleAddAssociate}
-                                className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+                                disabled={addingAssociate}
+                                className="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Add Associate
+                                {addingAssociate ? 'Adding...' : 'Add Associate'}
                             </button>
                         </div>
                     </div>
@@ -418,7 +444,12 @@ const Associates = () => {
             {/* Edit Modal */}
             {showEditModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
-                    <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl">
+                    <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative">
+                        {editingAssociate && (
+                            <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-2xl">
+                                <Loader text="Updating associate..." />
+                            </div>
+                        )}
                         <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
                             <Edit className="text-blue-600" /> Edit Associate
                         </h2>
@@ -433,7 +464,8 @@ const Associates = () => {
                                     onChange={(e) =>
                                         setEditAssociate({ ...editAssociate, [field]: e.target.value.trimStart() })
                                     }
-                                    className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                                    disabled={editingAssociate}
+                                    className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                                 />
                             ))}
 
@@ -448,9 +480,10 @@ const Associates = () => {
                                         if (input.length > 10) input = input.slice(0, 10);
                                         setEditAssociate({ ...editAssociate, phone: input });
                                     }}
-                                    className="flex-1 ml-2 outline-none text-slate-900"
+                                    className="flex-1 ml-2 outline-none text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
                                     maxLength="10"
                                     inputMode="numeric"
+                                    disabled={editingAssociate}
                                 />
                             </div>
                             <select
@@ -458,7 +491,8 @@ const Associates = () => {
                                 onChange={(e) =>
                                     setEditAssociate({ ...editAssociate, designation: e.target.value })
                                 }
-                                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                                disabled={editingAssociate}
+                                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <option value="">Select Designation</option>
                                 {designations.length > 0 ? (
@@ -497,6 +531,7 @@ const Associates = () => {
             )}
 
             {/* Delete Modal */}
+           {/* Delete Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
                     <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-xl">
@@ -522,6 +557,7 @@ const Associates = () => {
                     </div>
                 </div>
             )}
+
 
             {viewOrdersModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
@@ -549,19 +585,46 @@ const Associates = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {orders.map((order, index) => (
-                                            <tr key={order._id} className="border-b hover:bg-gray-50 transition">
-                                                <td className="py-3 px-4">{index + 1}</td>
-                                                <td className="py-3 px-4 font-medium">{order.customerId?.name || "N/A"}</td>
-                                                <td className="py-3 px-4">{order.customerId?.phone || "-"}</td>
-                                                <td className="py-3 px-4">{order.quantity}</td>
-                                                <td className="py-3 px-4">₹ {order.amount}</td>
-                                                <td className="py-3 px-4">{order.paymentMode}</td>
-                                                <td className="py-3 px-4">{order.status}</td>
-                                            </tr>
-                                        ))}
+                                        {(() => {
+                                            const indexOfLastOrder = ordersPage * ordersPerPage;
+                                            const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+                                            const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+                                            return currentOrders.map((order, index) => (
+                                                <tr key={order._id} className="border-b hover:bg-gray-50 transition">
+                                                    <td className="py-3 px-4">{indexOfFirstOrder + index + 1}</td>
+                                                    <td className="py-3 px-4 font-medium">{order.customerId?.name || "N/A"}</td>
+                                                    <td className="py-3 px-4">{order.customerId?.phone || "-"}</td>
+                                                    <td className="py-3 px-4">{order.quantity}</td>
+                                                    <td className="py-3 px-4">₹ {order.amount}</td>
+                                                    <td className="py-3 px-4">{order.paymentMode}</td>
+                                                    <td className="py-3 px-4">{order.status}</td>
+                                                </tr>
+                                            ));
+                                        })()}
                                     </tbody>
                                 </table>
+                                {/* Orders Pagination */}
+                                {orders.length > ordersPerPage && (
+                                    <div className="flex justify-center items-center gap-3 mt-4">
+                                        <button
+                                            disabled={ordersPage === 1}
+                                            onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                                            className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                                        >
+                                            Prev
+                                        </button>
+                                        <span className="text-gray-600 text-sm">
+                                            Page {ordersPage} of {Math.ceil(orders.length / ordersPerPage)}
+                                        </span>
+                                        <button
+                                            disabled={ordersPage === Math.ceil(orders.length / ordersPerPage)}
+                                            onClick={() => setOrdersPage((p) => Math.min(Math.ceil(orders.length / ordersPerPage), p + 1))}
+                                            className="px-3 py-1 border rounded-md text-sm disabled:opacity-50"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 

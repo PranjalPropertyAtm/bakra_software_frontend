@@ -419,12 +419,14 @@ const handleChangePassword = async () => {
         🔒 Change Password
       </h2>
 
-      <div className="flex flex-col gap-4 max-w-sm">
+       <form autoComplete="off" className="flex flex-col gap-4 max-w-sm">
+     
         {/* Current Password */}
         <div className="relative">
           <input
             type={showCurrent ? "text" : "password"}
             placeholder="Current Password"
+            autoComplete="current-password"
             className={`border px-3 py-2 rounded-lg w-full pr-10 ${
               passwordErrors.currentPassword ? "border-red-500" : ""
             }`}
@@ -450,6 +452,7 @@ const handleChangePassword = async () => {
           <input
             type={showNew ? "text" : "password"}
             placeholder="New Password"
+             autoComplete="new-password"
             className={`border px-3 py-2 rounded-lg w-full pr-10 ${
               passwordErrors.newPassword ? "border-red-500" : ""
             }`}
@@ -475,6 +478,7 @@ const handleChangePassword = async () => {
           <input
             type={showConfirm ? "text" : "password"}
             placeholder="Confirm New Password"
+             autoComplete="new-password"
             className={`border px-3 py-2 rounded-lg w-full pr-10 ${
               passwordErrors.confirmPassword ? "border-red-500" : ""
             }`}
@@ -504,7 +508,7 @@ const handleChangePassword = async () => {
         >
           Update Password
         </button>
-      </div>
+     </form>
 
       {/* ✅ Confirmation Modal */}
       {showPasswordConfirm && (

@@ -2,7 +2,7 @@
 
 // src/pages/Dashboard.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -27,6 +27,7 @@ import axiosInstance from "../lib/axios.js";
 import MetricCard from "../components/MetricCard";
 import ChartCard from "../components/ChartCard";
 import DateFilterBar from "../components/DataFilterBar.jsx";
+import Loader from "../components/Loader";
 
 const COLORS = ["#0f172a", "#f59e0b", "#10b981", "#ef4444"];
 
@@ -41,34 +42,61 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 📊 Fetch Dashboard Data
+  // 📊 Fetch Dashboard Data with small client-side cache + background refresh
   useEffect(() => {
-    const fetchDashboard = async () => {
+    let mounted = true;
+    const controller = new AbortController();
+    const cacheKey = `dashboardCache:${JSON.stringify(range)}`;
+    const TTL = 30 * 1000; // 30s
+
+    const doFetch = async (showLoader = true) => {
       try {
-        setLoading(true);
-        const res = await axiosInstance.get("dashboard/summary");
-        console.log("✅ Dashboard API Response:", res.data);
-        setData(res.data.dashboard);
+        if (showLoader) setLoading(true);
+        const res = await axiosInstance.get("dashboard/summary", { signal: controller.signal });
+        if (!mounted) return;
+        if (res?.data) {
+          setData(res.data.dashboard);
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: res.data.dashboard }));
+          } catch (e) {
+            /* ignore storage errors */
+          }
+        }
       } catch (err) {
+        if (err.name === 'AbortError' || err?.message === 'canceled' || err.name === 'CanceledError') return;
         console.error("❌ Error fetching dashboard:", err);
-        setError("Failed to load dashboard data");
+        if (mounted) setError("Failed to load dashboard data");
       } finally {
-        setLoading(false);
+        if (mounted && showLoader) setLoading(false);
       }
     };
 
-    fetchDashboard();
+    // try cache first
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Date.now() - parsed.ts < TTL) {
+          setData(parsed.data);
+          setLoading(false);
+          // refresh in background without showing loader
+          doFetch(false);
+          return () => { mounted = false; controller.abort(); };
+        }
+      }
+    } catch (e) {
+      /* ignore parse errors */
+    }
+
+    // no fresh cache — fetch and show loader
+    doFetch(true);
+
+    return () => { mounted = false; controller.abort(); };
   }, [range]);
 
-  if (loading)
-    return <p className="text-slate-500 text-center mt-10">Loading Dashboard...</p>;
-  if (error)
-    return (
-      <p className="text-red-500 text-center mt-10">{error}</p>
-    );
 
   // 🧮 KPI Cards
-  const metrics = [
+  const metrics = useMemo(() => [
     {
       label: "Total Revenue",
       value: `₹${data?.metrics?.totalRevenue?.toLocaleString() || 0}`,
@@ -89,17 +117,28 @@ const Dashboard = () => {
       value: data?.metrics?.cancelledOrders || 0,
       icon: AlertTriangle,
     },
-  ];
+  ], [data]);
 
   // 📈 Charts
-  const orderTrend = data?.trends || [];
-  const paymentModeData = [
+  const orderTrend = useMemo(() => data?.trends || [], [data]);
+  const paymentModeData = useMemo(() => [
     { mode: "Cash", value: data?.payments?.totalCash || 0 },
     { mode: "UPI", value: data?.payments?.totalUPI || 0 },
-  ];
+  ], [data]);
 
   // 📋 Recent Orders
-  const recentOrders = data?.recentOrders || [];
+  const recentOrders = useMemo(() => data?.recentOrders || [], [data]);
+
+  if (loading)
+    return (
+      <div className="min-h-[300px] flex items-center justify-center">
+        <Loader text="Loading dashboard..." />
+      </div>
+    );
+  if (error)
+    return (
+      <p className="text-red-500 text-center mt-10">{error}</p>
+    );
 
   return (
     <div className="p-6 space-y-8 font-[Inter]">

@@ -217,29 +217,68 @@ const Dashboard = () => {
         {/* 📅 Today's Order Status Distribution */}
 
 <ChartCard title="📅 Today's Order Summary">
-  <ResponsiveContainer width="100%" height={250}>
-    <PieChart>
-      <Pie
-        data={[
-          { name: "Delivered", value: data?.today?.todayDelivered || 0 },
-          { name: "Cancelled", value: data?.today?.todayCancelled || 0 },
-          { name: "Pending", value: data?.today?.todayPending || 0 },
-        ]}
-        dataKey="value"
-        nameKey="name"
-        cx="50%"
-        cy="50%"
-        outerRadius={83}
-        label={({ name, value }) => `${name}: ${value}`}
-      >
-        <Cell fill="#10b981" /> {/* Delivered - Green */}
-        <Cell fill="#ef4444" /> {/* Cancelled - Red */}
-        <Cell fill="#f59e0b" /> {/* Pending - Yellow */}
-      </Pie>
-      <Legend />
-      <Tooltip />
-    </PieChart>
-  </ResponsiveContainer>
+  {(() => {
+    const todayData = [
+      { name: "Delivered", value: data?.today?.todayDelivered || 0 },
+      { name: "Cancelled", value: data?.today?.todayCancelled || 0 },
+      { name: "Pending", value: data?.today?.todayPending || 0 },
+    ];
+    const totalOrders = todayData.reduce((sum, item) => sum + item.value, 0);
+
+    if (totalOrders === 0) {
+      return (
+        <div className="flex items-center justify-center h-64 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg">
+          <div className="text-center">
+            <p className="text-gray-500 text-lg font-medium">No Orders Today</p>
+            <p className="text-gray-400 text-sm mt-2">Check back later for updates</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <ResponsiveContainer width="100%" height={280}>
+        <PieChart>
+          <Pie
+            data={todayData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            outerRadius={90}
+            innerRadius={40}
+            paddingAngle={2}
+            label={({ name, value, percent }) => {
+              // Only show label if value > 0
+              if (value === 0) return null;
+              return `${name} ${value}`;
+            }}
+            labelLine={true}
+            labelPosition="outside"
+          >
+            <Cell fill="#10b981" /> {/* Delivered - Green */}
+            <Cell fill="#ef4444" /> {/* Cancelled - Red */}
+            <Cell fill="#f59e0b" /> {/* Pending - Yellow */}
+          </Pie>
+          <Legend 
+            verticalAlign="bottom" 
+            height={36}
+            wrapperStyle={{ paddingTop: "20px" }}
+            formatter={(value, entry) => `${value}: ${entry.payload.value}`}
+          />
+          <Tooltip 
+            formatter={(value) => `${value} order${value !== 1 ? 's' : ''}`}
+            contentStyle={{
+              backgroundColor: "white",
+              borderRadius: "8px",
+              border: "1px solid #e5e7eb",
+              padding: "8px 12px",
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  })()}
 </ChartCard>
 
       </div>

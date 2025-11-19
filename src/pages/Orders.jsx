@@ -32,6 +32,7 @@ const Orders = () => {
     couponCode: "",
   });
 
+  
   const [showEditModal, setShowEditModal] = useState(false);
   const [editOrder, setEditOrder] = useState({
     _id: "",
@@ -316,6 +317,22 @@ const Orders = () => {
       );
     });
   }, [searchTerm, orders]);
+
+const [openAssociateDropdown, setOpenAssociateDropdown] = useState(false);
+const [associateSearch, setAssociateSearch] = useState("");
+
+
+const filteredAssociates = associates.filter(a =>
+  a.name.toLowerCase().includes(associateSearch.toLowerCase())
+);
+
+const [openEditAssociateDropdown, setOpenEditAssociateDropdown] = useState(false);
+const [editAssociateSearch, setEditAssociateSearch] = useState("");
+
+const filteredEditAssociates = associates.filter(a =>
+  a.name.toLowerCase().includes(editAssociateSearch.toLowerCase())
+);
+
 
   // ✅ Pagination logic
   const indexOfLast = currentPage * ordersPerPage;
@@ -705,29 +722,98 @@ const Orders = () => {
                 <option value="Associates">Associates</option>
               </select>
 
-              {/* 👥 Associate Dropdown — only show when “Associates” selected */}
-              {newOrder.source === "Associates" && (
-                <select
-                  value={newOrder.associateId || ""}
-                  onChange={(e) => setNewOrder({ ...newOrder, associateId: e.target.value })}
-                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Select Associate</option>
-                  {loadingAssociates ? (
-                    <option disabled>Loading...</option>
-                  ) : associates.length > 0 ? (
-                    associates.map((a) => (
-                      <option key={a._id} value={a._id}>
-                        {a.name} (
-                        {designations.find((d) => d._id === a.designation || d.title === a.designation)?.title || a.designation}
-                        )
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No Associates Found</option>
-                  )}
-                </select>
-              )}
+  {newOrder.source === "Associates" && (
+  <div className="relative mt-3">
+    
+    {/* MAIN SELECT BUTTON */}
+    <div
+      onClick={() => setOpenAssociateDropdown(!openAssociateDropdown)}
+      className="border rounded-md px-3 py-2 bg-white cursor-pointer flex justify-between items-center hover:border-green-500 transition"
+    >
+      <span>
+        {newOrder.associateId
+          ? associates.find(a => a._id === newOrder.associateId)?.name
+          : "Select Associate"}
+      </span>
+      <span className="text-gray-500">▼</span>
+    </div>
+
+    {/* FLOATING CENTERED DROPDOWN */}
+    {openAssociateDropdown && (
+      <div
+        className="
+          fixed left-1/2 top-1/2 
+          -translate-x-1/2 -translate-y-1/2 
+          bg-white border rounded-xl shadow-2xl 
+          z-[9999] p-4 w-[90%] max-w-md 
+          max-h-[60vh] overflow-y-auto space-y-3
+        "
+      >
+        {/* Close Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setOpenAssociateDropdown(false)}
+            className="text-gray-600 hover:text-black"
+          >
+            ✖
+          </button>
+        </div>
+
+        {/* Search Box */}
+        <input
+          type="text"
+          placeholder="Search Associate..."
+          value={associateSearch}
+          onChange={(e) => setAssociateSearch(e.target.value)}
+          className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+        />
+
+        {/* List */}
+       {loadingAssociates ? (
+  <p className="text-gray-500 text-sm">Loading...</p>
+) : filteredAssociates.length > 0 ? (
+  filteredAssociates.map((a) => {
+    const designation =
+      designations.find(
+        (d) => d._id === a.designation || d.title === a.designation
+      )?.title || a.designation;
+
+    return (
+      <div
+        key={a._id}
+        onClick={() => {
+          setNewOrder({ ...newOrder, associateId: a._id });
+          setOpenAssociateDropdown(false);
+        }}
+        className="
+          px-3 py-2 rounded-lg 
+          hover:bg-green-100 cursor-pointer 
+          transition flex justify-between items-center
+          border-b border-gray-100
+        "
+      >
+        {/* NAME (truncate + width limit) */}
+        <span className="font-small text-gray-800 w-[120px] truncate">
+          {a.name}
+        </span>
+
+        {/* DESIGNATION (right aligned) */}
+        <span className="text-gray-500 text-sm w-[120px] text-right truncate">
+          {designation}
+        </span>
+      </div>
+    );
+  })
+) : (
+  <p className="text-gray-500 text-sm">No associates found</p>
+)}
+
+
+      </div>
+    )}
+  </div>
+)}
+
 
             </div>
 
@@ -860,49 +946,98 @@ const Orders = () => {
                 <option value="Online Payment">Online Payment</option>
               </select>
               {/* 🧭 Source Selection */}
-              <select
-                value={editOrder.source}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "Associates") {
-                    setEditOrder({ ...editOrder, source: value, associateId: "" });
-                  } else {
-                    setEditOrder({ ...editOrder, source: value, associateId: null });
-                  }
-                }}
-                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={editingOrder}
-              >
-                <option value="">Select Source</option>
+              {/* 🔽 SOURCE DROPDOWN */}
+{editOrder.source === "Associates" && (
+  <div className="relative mt-3">
 
-                {/* Static sources */}
-                <option value="WhatsApp">WhatsApp</option>
-                <option value="Call">Call</option>
-                <option value="Associates">Associates</option>
-              </select>
+    {/* MAIN SELECT BUTTON */}
+    <div
+      onClick={() => setOpenEditAssociateDropdown(!openEditAssociateDropdown)}
+      className="border rounded-md px-3 py-2 bg-white cursor-pointer flex justify-between items-center hover:border-green-500 transition"
+    >
+      <span>
+        {editOrder.associateId
+          ? associates.find(a => a._id === editOrder.associateId)?.name
+          : "Select Associate"}
+      </span>
+      <span className="text-gray-500">▼</span>
+    </div>
 
-              {/* 👥 Associate Dropdown — only show when “Associates” selected */}
-              {editOrder.source === "Associates" && (
-                <select
-                  value={editOrder.associateId || ""}
-                  onChange={(e) => setEditOrder({ ...editOrder, associateId: e.target.value })}
-                  className="w-full mt-3 border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={editingOrder}
-                >
-                  <option value="">Select Associate</option>
-                  {loadingAssociates ? (
-                    <option disabled>Loading...</option>
-                  ) : associates.length > 0 ? (
-                    associates.map((a) => (
-                      <option key={a._id} value={a._id}>
-                        {a.name} ({a.designation})
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No Associates Found</option>
-                  )}
-                </select>
-              )}
+    {/* FLOATING CENTERED DROPDOWN */}
+    {openEditAssociateDropdown && (
+      <div
+        className="
+          fixed left-1/2 top-1/2 
+          -translate-x-1/2 -translate-y-1/2 
+          bg-white border rounded-xl shadow-2xl 
+          z-[9999] p-4 w-[90%] max-w-md 
+          max-h-[60vh] overflow-y-auto space-y-3
+        "
+      >
+        {/* Close Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setOpenEditAssociateDropdown(false)}
+            className="text-gray-600 hover:text-black"
+          >
+            ✖
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <input
+          type="text"
+          placeholder="Search Associate..."
+          value={editAssociateSearch}
+          onChange={(e) => setEditAssociateSearch(e.target.value)}
+          className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+        />
+
+        {/* LIST */}
+      {loadingAssociates ? (
+  <p className="text-gray-500 text-sm">Loading...</p>
+) : filteredEditAssociates.length > 0 ? (
+  filteredEditAssociates.map((a) => {
+    const designation =
+      designations.find(
+        (d) => d._id === a.designation || d.title === a.designation
+      )?.title || a.designation;
+
+    return (
+      <div
+        key={a._id}
+        onClick={() => {
+          setEditOrder({ ...editOrder, associateId: a._id });
+          setOpenEditAssociateDropdown(false);
+        }}
+        className="
+          px-3 py-2 rounded-lg 
+          hover:bg-green-100 cursor-pointer 
+          transition flex justify-between items-center
+          border-b border-gray-100
+        "
+      >
+        {/* NAME */}
+        <span className="font-medium text-gray-800 w-[120px] truncate">
+          {a.name}
+        </span>
+
+        {/* DESIGNATION */}
+        <span className="text-gray-500 text-sm w-[120px] text-right truncate">
+          {designation}
+        </span>
+      </div>
+    );
+  })
+) : (
+  <p className="text-gray-500 text-sm">No associates found</p>
+)}
+
+      </div>
+    )}
+  </div>
+)}
+
 
 
             </div>

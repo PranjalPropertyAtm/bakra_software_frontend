@@ -54,7 +54,7 @@ const AdminSidebar = () => {
 
       {/* 🧭 Sidebar Container */}
       <div
-        className={`bg-slate-900 text-white min-h-screen fixed md:static top-0 left-0 z-50 transition-all duration-300 ease-in-out
+        className={`bg-slate-900 text-white h-screen overflow-y-auto fixed md:fixed top-0 left-0 z-50 transition-all duration-300 ease-in-out
         ${isOpen ? "w-64 translate-x-0" : "-translate-x-full md:translate-x-0 md:w-64"}`}
       >
         {/* Logo Section (⚠️ Unchanged) */}

@@ -83,8 +83,8 @@ const Associates = () => {
     const handleAddAssociate = async () => {
         if (addingAssociate) return;
 
-        const { name, phone, email, region, designation } = newAssociate;
-        if (!name || !phone || !email || !region || !designation) {
+        const { name, phone, region, designation } = newAssociate;
+        if (!name || !phone || !region || !designation) {
             notify.warning("Please fill all required fields!");
             return;
         }
@@ -121,8 +121,8 @@ const Associates = () => {
     const handleEditAssociate = async () => {
         if (editingAssociate) return;
 
-        const { name, phone, email, region, designation, _id } = editAssociate;
-        if (!name || !phone || !email || !region || !designation) {
+        const { name, phone, region, designation, _id } = editAssociate;
+        if (!name || !phone || !region || !designation) {
             notify.warning("Please fill all required fields!");
             return;
         }

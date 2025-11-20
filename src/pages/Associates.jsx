@@ -83,7 +83,7 @@ const Associates = () => {
     const handleAddAssociate = async () => {
         if (addingAssociate) return;
 
-        const { name, phone, region, designation,email } = newAssociate;
+        const { name, phone, region, designation, email } = newAssociate;
         if (!name || !phone || !region || !designation) {
             notify.warning("Please fill all required fields!");
             return;
@@ -93,10 +93,14 @@ const Associates = () => {
             notify.error("Phone number must be 10 digits long.");
             return;
         }
+        const payload = { ...newAssociate };
+        if (!payload.email || payload.email.trim() === "") {
+            payload.email = undefined;
+        }
 
         setAddingAssociate(true);
         try {
-            const res = await axiosInstance.post("/associates/add", newAssociate);
+            const res = await axiosInstance.post("/associates/add", payload);
             if (res.data.success) {
                 notify.success("Associate added successfully!");
                 setShowModal(false);
@@ -121,7 +125,7 @@ const Associates = () => {
     const handleEditAssociate = async () => {
         if (editingAssociate) return;
 
-        const { name, phone, region, designation, _id,email} = editAssociate;
+        const { name, phone, region, designation, _id, email } = editAssociate;
         if (!name || !phone || !region || !designation) {
             notify.warning("Please fill all required fields!");
             return;
@@ -131,10 +135,10 @@ const Associates = () => {
             notify.error("Phone number must be 10 digits long.");
             return;
         }
-            const payload = {
-        ...editAssociate,
-        email: email?.trim() || ""   // ✔ Ye line solve karegi
-    };
+        const payload = {
+            ...editAssociate,
+            email: email?.trim() || ""   // ✔ Ye line solve karegi
+        };
 
         setEditingAssociate(true);
         try {
@@ -263,7 +267,7 @@ const Associates = () => {
                                 <td className="py-3 px-4">{indexOfFirst + index + 1}</td>
                                 <td className="py-3 px-4 font-medium">{associate.name}</td>
                                 <td className="py-3 px-4">{associate.phone}</td>
-                                <td className="py-3 px-4">{associate.email}</td>
+                                <td className="py-3 px-4">{associate.email || "—"}</td>
                                 <td className="py-3 px-4">{associate.totalOrders}</td>
                                 <td className="py-3 px-4">₹ {associate.totalRevenue}</td>
                                 <td className="py-3 px-4">{associate.region}</td>
@@ -387,23 +391,7 @@ const Associates = () => {
                                     inputMode="numeric"
                                 />
                             </div>
-                            {/* <select
-                                value={newAssociate.designation}
-                                onChange={(e) =>
-                                    setNewAssociate({ ...newAssociate, designation: e.target.value })
-                                }
-                                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-                            >
-                                <option value="">Select Designation</option>
-                                {[
-                                    "Sales Executive",
-                                    "Sales Manager"
-                                ].map((slot) => (
-                                    <option key={slot} value={slot}>
-                                        {slot}
-                                    </option>
-                                ))}
-                            </select> */}
+
                             <select
                                 value={newAssociate.designation}
                                 onChange={(e) =>
@@ -535,136 +523,136 @@ const Associates = () => {
             )} */}
 
             {showEditModal && (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
-        <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative">
-            
-            {/* LOADER OVERLAY */}
-            {editingAssociate && (
-                <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-2xl">
-                    <Loader text="Updating associate..." />
+                <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
+                    <div className="bg-white w-full max-w-lg p-6 rounded-2xl shadow-xl relative">
+
+                        {/* LOADER OVERLAY */}
+                        {editingAssociate && (
+                            <div className="absolute inset-0 bg-white/60 z-50 flex items-center justify-center rounded-2xl">
+                                <Loader text="Updating associate..." />
+                            </div>
+                        )}
+
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
+                            <Edit className="text-blue-600" /> Edit Associate
+                        </h2>
+
+                        <div className="space-y-4">
+
+                            {/* NAME */}
+                            <input
+                                type="text"
+                                placeholder="Enter Name"
+                                value={editAssociate.name || ""}
+                                onChange={(e) =>
+                                    setEditAssociate({
+                                        ...editAssociate,
+                                        name: e.target.value.trimStart(),
+                                    })
+                                }
+                                disabled={editingAssociate}
+                                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+
+                            {/* EMAIL */}
+                            <input
+                                type="email"
+                                placeholder="Enter Email"
+                                value={editAssociate.email || ""}
+                                onChange={(e) =>
+                                    setEditAssociate({
+                                        ...editAssociate,
+                                        email: e.target.value.toLowerCase().trimStart(),
+                                    })
+                                }
+                                disabled={editingAssociate}
+                                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+
+                            {/* REGION */}
+                            <input
+                                type="text"
+                                placeholder="Enter Region"
+                                value={editAssociate.region || ""}
+                                onChange={(e) =>
+                                    setEditAssociate({
+                                        ...editAssociate,
+                                        region: e.target.value.trimStart(),
+                                    })
+                                }
+                                disabled={editingAssociate}
+                                className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+
+                            {/* PHONE */}
+                            <div className="flex items-center border rounded-md px-3 py-2">
+                                <span className="text-slate-600 font-medium select-none">+91</span>
+
+                                <input
+                                    type="tel"
+                                    placeholder="Enter 10-digit number"
+                                    value={editAssociate.phone || ""}
+                                    onChange={(e) => {
+                                        let input = e.target.value.replace(/\D/g, "");
+                                        if (input.length > 10) input = input.slice(0, 10);
+                                        setEditAssociate({ ...editAssociate, phone: input });
+                                    }}
+                                    className="flex-1 ml-2 outline-none text-slate-900"
+                                    maxLength={10}
+                                    disabled={editingAssociate}
+                                />
+                            </div>
+
+                            {/* DESIGNATION */}
+                            <select
+                                value={editAssociate.designation || ""}
+                                onChange={(e) =>
+                                    setEditAssociate({
+                                        ...editAssociate,
+                                        designation: e.target.value,
+                                    })
+                                }
+                                disabled={editingAssociate}
+                                className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                            >
+                                <option value="">Select Designation</option>
+
+                                {designations.length > 0 ? (
+                                    designations.map((d, i) => (
+                                        <option key={i} value={d.title}>
+                                            {d.title}
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option disabled>No designations available</option>
+                                )}
+                            </select>
+                        </div>
+
+                        {/* ACTION BUTTONS */}
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button
+                                onClick={() => setShowEditModal(false)}
+                                className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                onClick={handleEditAssociate}
+                                disabled={editingAssociate}
+                                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition disabled:bg-blue-300"
+                            >
+                                Update
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
 
-            <h2 className="text-2xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
-                <Edit className="text-blue-600" /> Edit Associate
-            </h2>
-
-            <div className="space-y-4">
-
-                {/* NAME */}
-                <input
-                    type="text"
-                    placeholder="Enter Name"
-                    value={editAssociate.name || ""}
-                    onChange={(e) =>
-                        setEditAssociate({
-                            ...editAssociate,
-                            name: e.target.value.trimStart(),
-                        })
-                    }
-                    disabled={editingAssociate}
-                    className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-
-                {/* EMAIL */}
-                <input
-                    type="email"
-                    placeholder="Enter Email"
-                    value={editAssociate.email || ""}
-                    onChange={(e) =>
-                        setEditAssociate({
-                            ...editAssociate,
-                            email: e.target.value.toLowerCase().trimStart(),
-                        })
-                    }
-                    disabled={editingAssociate}
-                    className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-
-                {/* REGION */}
-                <input
-                    type="text"
-                    placeholder="Enter Region"
-                    value={editAssociate.region || ""}
-                    onChange={(e) =>
-                        setEditAssociate({
-                            ...editAssociate,
-                            region: e.target.value.trimStart(),
-                        })
-                    }
-                    disabled={editingAssociate}
-                    className="w-full border rounded-md px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-
-                {/* PHONE */}
-                <div className="flex items-center border rounded-md px-3 py-2">
-                    <span className="text-slate-600 font-medium select-none">+91</span>
-
-                    <input
-                        type="tel"
-                        placeholder="Enter 10-digit number"
-                        value={editAssociate.phone || ""}
-                        onChange={(e) => {
-                            let input = e.target.value.replace(/\D/g, "");
-                            if (input.length > 10) input = input.slice(0, 10);
-                            setEditAssociate({ ...editAssociate, phone: input });
-                        }}
-                        className="flex-1 ml-2 outline-none text-slate-900"
-                        maxLength={10}
-                        disabled={editingAssociate}
-                    />
-                </div>
-
-                {/* DESIGNATION */}
-                <select
-                    value={editAssociate.designation || ""}
-                    onChange={(e) =>
-                        setEditAssociate({
-                            ...editAssociate,
-                            designation: e.target.value,
-                        })
-                    }
-                    disabled={editingAssociate}
-                    className="w-full border rounded-md px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-green-500"
-                >
-                    <option value="">Select Designation</option>
-
-                    {designations.length > 0 ? (
-                        designations.map((d, i) => (
-                            <option key={i} value={d.title}>
-                                {d.title}
-                            </option>
-                        ))
-                    ) : (
-                        <option disabled>No designations available</option>
-                    )}
-                </select>
-            </div>
-
-            {/* ACTION BUTTONS */}
-            <div className="flex justify-end gap-3 mt-6">
-                <button
-                    onClick={() => setShowEditModal(false)}
-                    className="px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
-                >
-                    Cancel
-                </button>
-
-                <button
-                    onClick={handleEditAssociate}
-                    disabled={editingAssociate}
-                    className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition disabled:bg-blue-300"
-                >
-                    Update
-                </button>
-            </div>
-        </div>
-    </div>
-)}
-
 
             {/* Delete Modal */}
-           {/* Delete Modal */}
+            {/* Delete Modal */}
             {showDeleteModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50 px-3">
                     <div className="bg-white w-full max-w-md p-6 rounded-2xl shadow-xl">

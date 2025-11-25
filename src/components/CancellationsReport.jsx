@@ -30,6 +30,13 @@ const CancellationsReport = ({ startDate, endDate }) => {
           Total cancellations:{" "}
           <strong>{data?.total || cancellations.length}</strong>
         </p>
+        <p className="text-slate-700 text-sm">
+          Total cancellation charges collected:{" "}
+          <strong>
+            ₹
+            {(data?.totalCancellationCharges || cancellations.reduce((sum, c) => sum + (c.totalCancellationCharge || 0), 0)).toLocaleString("en-IN")}
+          </strong>
+        </p>
       </div>
 
       {/* Table */}
@@ -43,6 +50,9 @@ const CancellationsReport = ({ startDate, endDate }) => {
                 <th className="p-2 text-left">#</th>
                 <th className="p-2 text-left">Customer</th>
                 <th className="p-2 text-left">Phone No.</th>
+                <th className="p-2 text-left">Amount</th>
+                <th className="p-2 text-left">Quantity</th>
+                <th className="p-2 text-left">Cancellation Charge</th>
                 <th className="p-2 text-left">Reason</th>
                 <th className="p-2 text-left">Cancelled Date</th>
               </tr>
@@ -56,7 +66,11 @@ const CancellationsReport = ({ startDate, endDate }) => {
                   <td className="p-2">{i + 1}</td>
                   <td className="p-2">{c.customerId?.name || "—"}</td>
                   <td className="p-2">{c.customerId?.phone || "—"}</td>
+                  <td className="p-2">₹{c.orderId?.amount?.toLocaleString("en-IN") || "0"}</td>
+                  <td className="p-2">{c.orderId?.quantity || "0"}</td>
+                    <td className="p-2">₹{c.totalCancellationCharge?.toLocaleString("en-IN") || "0"}</td>
                   <td className="p-2">{c.reason || "—"}</td>
+                
                   <td className="p-2">
                     {c.cancelledAt
                       ? new Date(c.cancelledAt).toISOString().split("T")[0]

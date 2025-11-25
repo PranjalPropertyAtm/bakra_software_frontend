@@ -9,6 +9,7 @@ const SalesReport = ({ startDate, endDate }) => {
     startDate,
     endDate,
   });
+  const cancellations = data?.report?.cancelledOrders || [];
 
   const allOrders = data?.report?.deliveredOrders || [];
 
@@ -62,6 +63,12 @@ const SalesReport = ({ startDate, endDate }) => {
                   (data?.report?.totalRevenue || 0) /
                   (data?.report?.totalOrders || 1)
                 ).toFixed(2)}
+          </strong>
+        </p>
+        <p>
+          Cancellation Revenue:{" "}
+          <strong className="text-slate-900">
+             {(data?.totalCancellationCharges || cancellations.reduce((sum, c) => sum + (c.totalCancellationCharge || 0), 0)).toLocaleString("en-IN")}
           </strong>
         </p>
       </div>

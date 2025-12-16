@@ -54,11 +54,14 @@ const AdminSidebar = () => {
 
       {/* 🧭 Sidebar Container */}
       <div
-        className={`bg-slate-900 text-white h-screen overflow-y-auto fixed md:fixed top-0 left-0 z-50 transition-all duration-300 ease-in-out
-        ${isOpen ? "w-64 translate-x-0" : "-translate-x-full md:translate-x-0 md:w-64"}`}
+        {/* className={`bg-slate-900 text-white h-screen overflow-y-auto fixed md:fixed top-0 left-0 z-50 transition-all duration-300 ease-in-out
+        ${isOpen ? "w-64 translate-x-0" : "-translate-x-full md:translate-x-0 md:w-64"}`} */}
+        className={`bg-slate-900 text-white h-screen overflow-y-auto fixed md:fixed top-0 left-0 z-50 transition-all duration-300 ease-in-out w-64 md:w-64 min-w-[16rem] max-w-[16rem] box-border
+        ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
       >
         {/* Logo Section (⚠️ Unchanged) */}
-        <div className="relative w-[64px] h-[64px] overflow-hidden shadow-2xl transition-transform duration-300 active:scale-95 m-24 mt-4 mb-0">
+        {/* <div className="relative w-[64px] h-[64px] overflow-hidden shadow-2xl transition-transform duration-300 active:scale-95 m-24 mt-4 mb-0"> */}
+        <div className="relative w-[64px] h-[64px] overflow-hidden shadow-2xl transition-transform duration-300 active:scale-95 mx-auto my-4">
           <img
             src="/logo.png"
             alt="Bakra Kitchen Logo"
